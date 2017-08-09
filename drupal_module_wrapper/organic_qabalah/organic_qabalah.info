@@ -1,0 +1,5 @@
+name = Organic Qabalah
+description = Qabalistic context framework
+package = Organic Connectivity
+core = 7.x
+files[] = organic_qabalah.module;

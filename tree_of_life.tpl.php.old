@@ -1,0 +1,137 @@
+<?php /*                                                                  */
+/*                                                                        */
+/*                PRINT SPHERE AND PATH DATA WITH SELECTIONS              */
+/*                                                                        */
+/*                                                                        */
+                            global $qabalah_spheres;
+                            global $qabalah_paths;
+?>
+
+<?php if(!empty($qabalah_spheres)){ ?>
+
+<nav class="tree-of-life">
+
+
+                <ul id="spheres">
+<?php foreach($qabalah_spheres as $cid=>$details){ ?>
+
+
+
+<?php
+$classes='';
+
+///////////////////////if(array_key_exists($cid,$qabalah_spheres[arg(1)]->children)) $classes='active';
+if( arg(0)=='node'
+    &&is_numeric(arg(1))
+    &&!empty($qabalah_spheres[$cid]->children)
+    &&array_key_exists(arg(1),$qabalah_spheres[$cid]->children)
+    &&$qabalah_spheres[$cid]->children[arg(1)][0]==100)
+ $classes='active';
+elseif($qabalah_spheres[$cid]->nid==arg(1)) $classes='active';
+
+?>
+
+<?php
+            ##########################################################################################
+            ##########################################################################################
+            /////////////// use weights to determine the selections............./////////////////////
+            ##########################################################################################
+            //elseif( $details->nid == $node_contexts[0] ) $return .= '<li class="touch">\n';
+            //elseif( in_array( $details->nid, $node_contexts ) ) $return .= '<li class="touch">\n';
+            //elseif( in_array( $details->nid, $node_themes ) ) $return .= '<li class="thematique">\n';
+            ##########################################################################################
+            ##########################################################################################
+?>
+
+                    <li id="sphere-<?php echo($qabalah_spheres[$cid]->nid); ?>" class="<?php echo($classes); ?>">
+
+
+                        <a href="/<?php echo(drupal_get_path_alias('node/'.$qabalah_spheres[$cid]->nid)); ?>">
+
+
+
+<span class="numerological"><?php echo($qabalah_spheres[$cid]->nid); ?></span>
+
+
+<?php if(!empty($qabalah_spheres[$cid]->field_subtitle)): ?>
+                            <span class="subtitle"><?php echo($qabalah_spheres[$cid]->field_subtitle[LANGUAGE_NONE][0]["value"]); ?></span>
+<?php endif; ?>
+
+
+<?php if(!empty($qabalah_spheres[$cid]->children)&&array_key_exists(34,$qabalah_spheres[$cid]->children)): ?>
+                            <span class="translation"><?php echo($qabalah_spheres[$cid]->children[34][0]); ?></span>
+<?php endif; ?>
+
+
+<?php if(arg(0)=='node'&&is_numeric(arg(1))&&!empty($qabalah_spheres[$cid]->children)&&array_key_exists(arg(1),$qabalah_spheres[$cid]->children)): ?>
+                            <span class="selected-attribute"><?php echo($qabalah_spheres[$cid]->children[arg(1)][0]); ?></span>
+<?php else: ?>
+                            <span class="title"><?php echo($qabalah_spheres[$cid]->title); ?></span>
+<?php endif; ?>
+
+
+
+<?php if(!empty($qabalah_spheres[$cid]->field_images)): ?>
+                            <span class="icon"><img src="<?php echo(image_style_url($image_style,$qabalah_spheres[$cid]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/></span>
+<?php endif; ?>
+
+
+
+                        </a>
+
+                    </li>
+
+
+<?php } ?>
+                </ul>
+
+
+
+
+<?php if(!empty($qabalah_paths)){ ?>
+
+                <ul id="paths">
+
+
+<?php foreach($qabalah_paths as $cid=>$details){ ?>
+
+
+<?php
+#if( !empty($node->field_path) )
+#	foreach( $node->field_path["und"] as $path )
+#		if( $path["nid"] == $i ) $pathSelected = 1;
+#if( !empty($paths_via_astro) && array_key_exists($i, $paths_via_astro) ) $pathSelected = 1;
+$classes='';
+if(is_numeric(arg(1))
+   &&!empty($qabalah_paths[arg(1)]->children)
+   &&array_key_exists($cid,$qabalah_paths[arg(1)]->children)) $classes='active';
+elseif($qabalah_paths[$cid]->nid==arg(1)) $classes='active';
+?>
+
+                    <li id="path-<?php echo($qabalah_paths[$cid]->nid); ?>" class="<?php echo($classes); ?>">
+                        <a href="/<?php echo(drupal_get_path_alias('node/'.$qabalah_paths[$cid]->nid)); ?>">
+
+                            <span class="title"><?php echo($qabalah_paths[$cid]->title); ?></span>
+<?php if(!empty($qabalah_paths[$cid]->field_subtitle)): ?>
+                            <span class="subtitle"><?php echo($qabalah_paths[$cid]->field_subtitle[LANGUAGE_NONE][0]["value"]); ?></span>
+<?php endif; ?>
+
+<span class="numerological"><?php echo($qabalah_paths[$cid]->nid); ?></span>
+
+<?php if(isset($node)&&$node->type=='thing'&&array_key_exists($node->nid,$qabalah_paths[$cid]) ): ?>
+                            <span class="selected-attribute"><?php echo($qabalah_paths[$cid][$node->nid]); ?></span>
+<?php endif; ?>
+
+                        </a>
+                    </li>
+<?php } ?>
+                </ul>
+
+<?php } ?>
+
+
+
+</nav>
+
+
+<?php } ?>

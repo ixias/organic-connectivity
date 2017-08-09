@@ -1,0 +1,195 @@
+<?php
+
+function organic_calendar_menu(){
+    return array(
+        'items/calendar' => array(
+            'title' => 'Calendar',
+            'description' => 'Gregorian',
+            'page callback' => 'theme',
+            'page arguments' => array('date_overview_page'),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/calendar/%' => array(
+            'title' => 'Calendar by Year',
+            'description' => 'Gregorian Yearly',
+            'page callback' => 'theme',
+            'page arguments' => array('date_year_page'),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/calendar/'.date("Y") => array(
+            'title' => 'This Year',
+            'description' => 'Gregorian Yearly',
+            'page callback' => 'theme',
+            'page arguments' => array('date_year_page'),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/calendar/%/%' => array(
+            'title' => 'Calendar by Month',
+            'description' => 'Gregorian Monthly',
+            'page callback' => 'theme',
+            'page arguments' => array('date_month_page'),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/calendar/'.date("Y").'/'.date('m') => array(
+            'title' => 'This Month',
+            'description' => 'Gregorian Monthly',
+            'page callback' => 'theme',
+            'page arguments' => array('date_month_page'),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+    );
+}
+
+function organic_calendar_theme(){
+    return array(
+        'date_overview_page' => array(
+            'template' => 'date_overview',
+            'path'=>drupal_get_path('module','organic_calendar').'/lib',
+            'variables' => array(
+                'show_months'=>TRUE,
+                'show_start_year_chooser'=>TRUE,
+            ),
+        ),
+        'date_year_page' => array(
+            'template' => 'date_year_page',
+            'path'=>drupal_get_path('module','organic_calendar').'/lib',
+            'variables' => array(
+                'show_start_year_chooser'=>TRUE,
+            ),
+        ),
+        'date_month_page' => array(
+            'template' => 'date_month_page',
+            'path'=>drupal_get_path('module','organic_calendar').'/lib',
+            'variables' => array(
+                'show_start_year_chooser'=>TRUE,
+            ),
+        ),
+    );
+}
+
+
+
+function organic_calendar_form_organic_prototype_config_page_alter(&$form,&$form_state,$form_id){
+    $form['organic_connectivity_event_prototype'] = array(
+        '#type' => 'textfield',
+        '#title' => t('The ID of the node that defines a EVENT node'),
+        '#default_value'=>variable_get('organic_connectivity_event_prototype',''),
+        '#description' => t('This allows you to setup EVENT nodes (by connecting them prototypically to this node)'),
+        '#required' => FALSE,
+    );
+    return $form;
+}
+
+
+
+
+function organic_calendar_preprocess(&$variables,$hook){
+
+    if($hook=='date_overview_page'||$hook=='date_year_page'||$hook=='date_month_page'){
+
+        //print_r($variables);
+
+        if(!$variables['is_front']){
+            if($hook=='date_overview_page'&&arg(1)=='calendar'){ drupal_set_title('Solar orbits'); }
+            if($hook=='date_year_page'){ drupal_set_title('Solar orbit '.arg(2)); }
+            if($hook=='date_month_page'){ drupal_set_title('Solar orbit '.arg(2).', Lunar cycle '.organic_calendar_month_names(arg(3))); }
+        }
+
+    }
+
+
+
+    $items=organic_prototype_obtain_entities_by_connection(null,null,TRUE);
+    $variables['items']=$items;
+
+    #SELECT DATE_FORMAT((FROM_UNIXTIME(node.created) + INTERVAL -18000 SECOND), '%Y%m') AS created_year_month,
+    #COUNT(node.nid) AS num_records
+    # LEFT JOIN content_field_connection node_data_field_connection ON node.vid = node_data_field_connection.vid AND (node_data_field_connection.field_connection_nid = '502' OR node_data_field_connection.field_connection_nid = '787' OR node_data_field_connection.field_connection_nid = '472' OR node_data_field_connection.field_connection_nid = '355' OR node_data_field_connection.field_connection_nid = '757' OR node_data_field_connection.field_connection_nid = '667' OR node_data_field_connection.field_connection_nid = '809' OR node_data_field_connection.field_connection_nid = '395')
+    # WHERE (node.status <> 0) AND (node_data_field_connection.field_connection_nid IS NULL) AND (node.type not in ('category'))
+    # GROUP BY created_year_month
+    #  ORDER BY created_year_month DESC
+
+    $monthCounts=array();
+    if(count($items)){
+        foreach($items as $item){
+
+            // Only add items not exposed as context
+
+            /*if(!empty($item->field_expose_as_context)){
+                if($item->field_expose_as_context[LANGUAGE_NONE][0]['value']=='0'){*/
+
+                    $monthCounts[date("Y",$item->created)][date("m",$item->created)][]=$item->nid;
+
+                    if(isset($monthCounts[date("Y",$item->created)]['total']))
+                        $monthCounts[date("Y",$item->created)]['total']++;
+                    else $monthCounts[date("Y",$item->created)]['total']=1;
+
+            /*}
+            }
+            else{
+                $monthCounts[date("Y",$item->created)][date("m",$item->created)][]=$item->nid;
+
+                if(isset($monthCounts[date("Y",$item->created)]['total']))
+                    $monthCounts[date("Y",$item->created)]['total']++;
+                else $monthCounts[date("Y",$item->created)]['total']=1;
+
+            }*/
+
+            if(isset($monthCounts['total']))
+                $monthCounts['total']++;
+            else $monthCounts['total']=1;
+
+        }
+        ksort($monthCounts,SORT_NUMERIC);
+        $variables['monthCounts']=$monthCounts;
+        #print_r($variables['monthCounts']);
+
+    }
+
+}
+
+function organic_calendar_month_names( $monthNumber ){
+
+    $monthNames = array( "", "January", "February", "March",
+                         "April", "May", "June", "July",
+                         "August", "September", "October",
+                         "November", "December" );
+
+    return $monthNames[intval($monthNumber)];
+
+}
+
+function organic_calendar_date_display_months_list($year,&$months){
+    $return = '<ul>';
+    //foreach( $months as $month => $count ){
+    for( $x=1; $x<13; $x++ ){
+        if( $x<10 ) $test = "0".$x;
+        else $test = "".$x."";
+        if(array_key_exists($test,$months) && $count=count($months[$test])){
+            if($count<1) $popularityCategory=0;
+            elseif( $count >= 1 && $count<2 ) $popularityCategory=1;
+            elseif( $count >= 2 && $count<5 ) $popularityCategory=2;
+            elseif( $count >= 5 && $count<10 ) $popularityCategory=3;
+            elseif( $count >= 10 ) $popularityCategory = 4;
+            $return .= '<li class="tag-category-'.$popularityCategory.'">';
+            $return .= '<a href="/items/calendar/'.$year.'/'.$test.'">';
+            $return .= organic_calendar_month_names($test).'<span class="details">'.$count.'<span style="color:cyan;">'.round($months['total']/$count).'%</span></span>';
+            $return .= '</a>';
+            $return .= '</li>';
+        }
+        /*else{
+            $return .= "<li style=\"font-size:50%;\">\n";
+            $return .= organic_calendar_month_names($test) . " (0)";
+            $return .= "</li>\n\n";
+        }*/
+    }
+    $return .= '</ul>';
+    return $return;
+}
+
+?>

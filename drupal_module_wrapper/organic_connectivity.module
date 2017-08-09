@@ -1,0 +1,1553 @@
+<?php
+/// this is still used in ixiasart page.tpl.php, when taxonomy is gone, please delete this
+function taxonomy_node_get_terms_by_vocabulary($node, $vid, $key = 'tid'){
+    $result = db_query('SELECT t.tid, t.* FROM {taxonomy_term_data} t INNER JOIN {taxonomy_index} r ON r.tid = t.tid WHERE t.vid = :vid AND r.nid = :node_nid ORDER BY weight', array(':vid' => $vid, ':node_nid' => $node->nid));
+    return $result->fetchAll();
+}
+
+
+
+
+
+
+
+$GLOBALS['attribs']=array();
+//$GLOBALS['attributes_total_uses']=0;
+$GLOBALS['subjects']=array();
+$GLOBALS['contexts_total_uses']=0;
+$GLOBALS['types']=array();
+$GLOBALS['types_total_uses']=0;
+
+$GLOBALS['ATTRIBUTE_PROTOTYPE_VAR']=variable_get('organic_connectivity_attribute_prototype','');
+$GLOBALS['TYPE_PROTOTYPE_VAR']=variable_get('organic_connectivity_prototype_prototype','');
+$GLOBALS['SUBJECT_PROTOTYPE_VAR']=variable_get('organic_connectivity_context_prototype','');
+
+
+
+
+include_once('/homepages/21/d93015512/htdocs/library/organic_connectivity/io.php');
+
+
+
+
+$GLOBALS['item_viewers']=array(
+    'blocks'=>array(
+        'title'=>'Blocks',
+        'arg'=>'blocks',
+        'template'=>'items_blocks.tpl.php'
+    ),
+    'nodes'=>array(
+        'title'=>'Nodes',
+        'arg'=>'nodes',
+        'template'=>'items_nodes.tpl.php'
+    ),
+    'tabular'=>array(
+        'title'=>'Table',
+        'arg'=>'table',
+        'template'=>'items_table.tpl.php'
+    ),
+    'cinema'=>array(
+        'title'=>'Rotator',
+        'arg'=>'rotator',
+        'template'=>'items_cinema.tpl.php'
+    ),
+    'calendar'=>array(
+        'title'=>'Calendar',
+        'arg'=>'calendar',
+        'template'=>'items_calendar.tpl.php'
+    ),
+    'mapped'=>array(
+        'title'=>'Residue',
+        'arg'=>'residue',
+        'template'=>'items_map.tpl.php'
+    ),
+    'syndication'=>array(
+        'title'=>'RSS',
+        'arg'=>'syndicate',
+        'template'=>'items_syndicate.tpl.php'
+    ),
+);
+
+
+
+
+$GLOBALS['sortings']=array(
+    'created'=>array(
+        'title'=>'Date',
+        //'arg'=>'blocks',
+    ),
+    'weight'=>array(
+        'title'=>'Weight',
+        //'arg'=>'weight',
+    ),
+    'rand'=>array(
+        'title'=>'Random',
+        //'arg'=>'random',
+    ),
+    'alpha'=>array(
+        'title'=>'Title',
+        //'arg'=>'',
+    ),
+);
+
+
+
+
+$GLOBALS['request_tree']=explode("/",$_SERVER['REQUEST_URI']);
+array_shift($GLOBALS['request_tree']);
+
+
+
+
+/*function organic_connectivity_user_access(){
+    global $user;
+    if( in_array("authenticated user", $user->roles) ) return TRUE;
+    return FALSE;
+}*/
+function organic_connectivity_check_category_access(){
+    if($restricted_to=variable_get('organic_context_categories_restrict_to_users','')){
+        $restricted_to=explode(',',$restricted_to);
+        global $user;
+        if(isset($user->name)&&in_array($user->name,$restricted_to)) return TRUE;
+        if(isset($user->name)&&in_array('[creator]',$restricted_to)) return TRUE;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+
+
+function organic_connectivity_menu(){
+    return array(
+        'connectivity'=>array(
+            'title'=>'Connectivity',
+            'description'=>'Introduction',
+            'page callback'=>'organic_connectivity_intro',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/config'=>array(
+            'title'=>'Config',
+            'description'=>'Configurable variables for OrganicConnectivity',
+            'page callback'=>'drupal_get_form',
+            'page arguments'=>array('organic_connectivity_config_page',),
+            'access callback'=>'organic_prototype_super_user_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/overview'=>array(
+            'title'=>'Overview',
+            'description'=>'Your node cataloging data overview',
+            'page callback'=>'theme',
+            'page arguments'=>array('overview',),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers'=>array(
+            'title'=>'Viewers',
+            'description'=>'Your node cataloging viewers',
+            'page callback'=>'theme',
+            'page arguments'=>array('overview',),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/partition'=>array(
+            'title'=>'Partition',
+            'description'=>'Your node cataloging partition view',
+            'page callback'=>'theme',
+            'page arguments'=>array('partition',),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/cloud'=>array(
+            'title'=>'Cloud',
+            'description'=>'Clump of categories sized by children',
+            'page callback'=>'theme',
+            'page arguments'=>array('cloud'),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/flat'=>array(
+            'title'=>'Boards',
+            'description'=>'Block list viewer of Categories w/a few random children',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'ordering'=>'created',
+                    'perpage'=>250,
+                    'by_type'=>variable_get('organic_connectivity_context_prototype',''),
+                    'show_contexts'=>1,//0=no,1=yes
+                    'show_random_child'=>3,
+                    'show_children'=>TRUE,
+                    'show_multi_image'=>FALSE,
+                    'show_date'=>FALSE,
+                    'show_outer_contexts'=>FALSE,
+                )
+            ),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/tree'=>array(
+            'title'=>'Tree',
+            'description'=>'Nestings__Embedded topic viewer__Nested tree listing of categories (setlists)',
+            'page callback'=>'theme',
+            'page arguments'=>array('tree'),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/serpent'=>array(
+            'title'=>'Serpent',
+            'description'=>'Sankey diagram',
+            'page callback'=>'theme',
+            'page arguments'=>array('serpent'),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/neuron'=>array(
+            'title'=>'Neuron',
+            'description'=>'Force-directed Context Graph',
+            'page callback'=>'theme',
+            'page arguments'=>array('neuron'),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/viewers/sunburst'=>array(
+            'title'=>'Sunburst',
+            'description'=>'Connected Sunburst Context Graph',
+            'page callback'=>'theme',
+            'page arguments'=>array('sunburst'),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds'=>array(
+            'title'=>'ViewerFeeds',
+            'description'=>'Your node cataloging viewerFeeds',
+            'page callback'=>'organic_connectivity_intro',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds/json_contexts_hierarchical'=>array(
+            'title'=>'JSON_Contexts_Hierarchical',
+            'description'=>'JSON feed for Force-directed Context Graph',
+            'page callback'=>'organic_connectivity_json_hierarchical',
+            'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds/json_ForceDirected_d3'=>array(
+            'title'=>'JSON_ForceDirected_for_d3',
+            'description'=>'JSON feed for Force-directed Context Graph for d3',
+            'page callback'=>'organic_connectivity_json_ForceDirected',
+            'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds/json_Sunburst'=>array(
+            'title'=>'JSON_Sunburst',
+            'description'=>'JSON feed for Connected Sunburst Context Graph',
+            'page callback'=>'organic_connectivity_json_Sunburst',
+            'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds/json_Sunburst_flat'=>array(
+            'title'=>'JSON_Sunburst_flat',
+            'description'=>'JSON feed for Connected Sunburst Context Graph',
+            'page callback'=>'organic_connectivity_json_Sunburst_flat',
+            'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/feeds/json_sunburst_d3'=>array(
+            'title'=>'JSON_Sunburst__expandable',
+            'description'=>'JSON feed for Connected Sunburst Context Graph',
+            'page callback'=>'organic_connectivity_json_sunburst_d3',
+            'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/sort-by'=>array(
+            'title'=>'Sorting',
+            'description'=>'Connectivity sorting options',
+            'page callback'=>'organic_gallery_sorting',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/sort-by/users'=>array(
+            'title'=>'by User',
+            'description'=>'Setlists Broken by Creators',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'cloud',array(
+                    'break_by_user'=>TRUE,
+                    'show_displays'=>FALSE,
+                    'show_sorting'=>FALSE,
+                )
+            ),
+            'access callback'=>'organic_prototype_super_user_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/attributes' => array(
+            'title'=>'Attributes',
+            'description'=>'Nodes that define, a prototype for connectivity',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'by_type'=>variable_get('organic_connectivity_attribute_prototype',''),
+                    'image_size'=>'medium',
+                    'show_multi_image'=>FALSE,
+                    'mine_children'=>TRUE,
+                    'show_sorting'=>FALSE,
+                    'show_displays'=>FALSE,
+                    'show_outer_contexts'=>TRUE,
+                )
+            ),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+
+        ),
+        'connectivity/attributes/subjects'=>array(
+            'title'=>'Subjects',
+            'description'=>'Organic topic categorization viewers',
+            'page callback'=>'node_page_view',
+            'page arguments'=>array(node_load(variable_get('organic_connectivity_context_prototype',''))),
+            'access callback'=>'organic_connectivity_check_category_access',
+            'menu_name'=>'main-menu',
+        ),
+        'connectivity/attributes/prototype'=>array(
+            'title'=>'Prototypes',
+            'description'=>'...',
+            'page callback'=>'theme',
+            'page arguments'=>array('prototypes'),
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+        ),
+        'connectivity/attributes/prototype/journal'=>array(
+            'title' => 'Journal',
+            'description' => 'Journal entries via JOURNAL prototype',
+            'page callback' => 'theme',
+            'page arguments' => array('items',array(
+                'by_type'=>variable_get('organic_connectivity_journal_prototype',''),
+                'ordering'=>'created',
+                'perpage'=>100,
+                'show_pagination'=>TRUE,
+                'show_toolbar'=>TRUE,
+                'show_contexts'=>0,
+                'show_outer_contexts'=>TRUE,
+                'show_random_child'=>FALSE,
+                'show_children'=>FALSE,
+                'break_by_contexts'=>FALSE,
+                'show_date'=>'Y-m-d',
+                'show_heading'=>TRUE,
+            )),
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+        ),
+        'search'=>array(
+            'title' => 'Search',
+            'description' => 'Keyword search',
+            'menu_name' => 'main-menu',
+        ),
+        'http://validator.w3.org/check?uri=referer'=>array(
+            'title' => 'HTML',
+            'description' => 'Check HTML Structure',
+            'menu_name' => 'main-menu',
+        ),
+        'http://jigsaw.w3.org/css-validator/check/referer'=>array(
+            'title' => 'CSS',
+            'description' => 'Check CSS Structure',
+            'menu_name' => 'main-menu',
+        ),
+        'http://drupal.org'=>array(
+            'title' => 'Drupal',
+            'description' => 'Powered by Drupal CMS',
+            'menu_name' => 'main-menu',
+        ),
+/*        'node/add/thing' => array(
+            'page callback' => 'organic_connectivity_build_form',
+            'access callback' => 'organic_prototype_super_user_access',
+        ),*/
+/*        'node/%/edit' => array(
+            'page callback' => 'organic_connectivity_build_form',
+            'access callback' => 'organic_prototype_super_user_access',
+        ),*/
+    );
+}
+
+
+
+
+function organic_connectivity_theme(){
+    return array(
+        'heading_title'=>array(
+            'template'=>'heading_title',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'node'=>NULL,
+                'show_nid'=>FALSE,
+                'show_context_prototype'=>FALSE,
+                'show_prototype_prototype'=>FALSE,
+                'show_context_context'=>FALSE,
+            ),
+        ),
+        'parent_context_navigation'=>array(
+            'template'=>'parent_context_navigation',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'context_children_image_style'=>'medium',
+                'showChildren'=>10,
+            ),
+        ),
+        'context_layer'=>array(
+            'template'=>'contexts',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'context'=>NULL,
+                'image_style'=>NULL,
+                'mine_children'=>FALSE,
+                'show_random_child'=>NULL,
+                'show_displays'=>TRUE,
+                'parent'=>NULL,
+                'show_nid'=>FALSE,
+                'break_by_user'=>FALSE,
+            ),
+        ),
+        'overview'=>array(
+            'template'=>'overview',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(),
+        ),
+        'attributes_of_node'=>array(
+            'template'=>'attributes_of_node',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'node'=>NULL,
+            ),
+        ),
+        'attribute_of_nodes'=>array(
+            'template'=>'attribute_of_nodes',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'attribute'=>NULL,
+            ),
+        ),
+        'cloud'=>array(
+            'template'=>'viewer_cloud',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'context'=>NULL,
+                'image_style'=>'thumbnail',
+                'mine_children'=>TRUE,
+                'show_random_child'=>FALSE,
+                'show_displays'=>TRUE,
+                'show_sorting'=>TRUE,
+                'parent'=>FALSE,
+                'show_nid'=>FALSE,
+                'break_by_user'=>FALSE,
+            ),
+        ),
+        'tree'=>array(
+            'template'=>'viewer_tree',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+        ),
+        'serpent'=>array(
+            'template'=>'viewer_serpent',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+        ),
+        'neuron'=>array(
+            'template'=>'viewer_neuron',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+        ),
+        'sunburst'=>array(
+            'template'=>'viewer_sunburst',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+        ),
+    );
+}
+
+
+
+
+
+function organic_connectivity_preprocess(&$variables,$hook){
+
+    #echo('hi '.$hook);
+
+    global $nd;
+    if(empty($nd)&&arg(0)=='node'&&is_numeric(arg(1))){
+        #echo("You have loaded node via: ".$hook.' hook<br/>');
+        $nd=node_load(arg(1));
+        $nd->connections=organic_connectivity_extract_connections($nd->field_context,NULL);
+    }
+
+    if($hook=='overview'){
+    }
+
+    if($hook=='viewer_toolbar_attribute_chooser'||
+       $hook=='attributes_of_node'||
+       $hook=='attribute_of_nodes'){
+
+        global $attribs;
+        #global $attributes_total_uses;
+
+        if(empty($attribs)){
+            $attribs=organic_prototype_obtain_entities_by_connection(
+                variable_get('organic_connectivity_attribute_prototype',''),
+                'prototypical',
+                TRUE
+            );
+            #echo('<pre>'.print_r($attribs,TRUE).'</pre>');
+            /*foreach($attributes as $aid=>$attribute) $attributes[$aid]->connections=organic_connectivity_extract_connections($attribute->field_context);
+            foreach($attributes as $aid=>$attribute){
+                foreach($attribute->field_context as $cid=>$connection){
+                    if($connection['weight']==0&&$connection['response']!=0){    ///the checkings for attributional connectivity....good??
+                        if(!isset($attributes[$cid]->children))
+                            $attributes[$cid]->children=array();
+                        $attributes[$cid]->children[$aid]=$aid;
+                        ///////////////////////////////////////////////////////$subjects[$cid]->hasContextParent=TRUE;
+                    }
+                }
+            }*/
+        }
+    }
+    //// END ATTRIBUTE HOOKS
+
+
+    if($hook=='context_layer'||
+       $hook=='parent_context_navigation'||
+       $hook=='json_contexts'||
+       $hook=='attributes_of_node'||
+       $hook=='organic_qabalah_needs_you'||
+       $hook=='organic_prototype_needs_you'){
+
+        global $subjects;
+        global $contexts_total_uses;
+
+        if(empty($subjects)){
+
+            /////////////// OBTAIN SUBJECTS AND BUILD TREE ////////////////
+
+            $subjects=organic_prototype_obtain_entities_by_connection(
+                variable_get('organic_connectivity_context_prototype',''),
+                'prototypical',
+                TRUE
+            );
+
+            if(!empty($subjects)){
+                /// Replace field_collection crypted IDs with actual results sets
+                foreach($subjects as $cid=>$context){
+                    //check to see if anything has already loaded the connections
+                    if(!empty($subjects[$cid]->field_context[LANGUAGE_NONE])){
+                        $subjects[$cid]->connections=organic_connectivity_extract_connections($context->field_context);
+                    }
+                }
+
+
+            /// -
+            foreach($subjects as $cid=>$context){
+
+                // Count uses
+                $subjects[$cid]->uses=organic_prototype_obtain_entities_by_connection($context->nid,'contextual',FALSE);
+                $contexts_total_uses+=count($subjects[$cid]->uses);
+
+                /// Set children
+                if(!empty($context->connections)){
+
+                    foreach($context->connections as $connection){
+                        /// the checkings for categorical connectivity
+                        if($connection['type']==variable_get('organic_connectivity_context_prototype','')
+                           &&$connection['weight']>=50)
+                            $subjects[$connection['nid']]->children[$cid]=$cid;
+                    }
+
+                }
+
+            }
+
+            #echo('<pre>'.print_r($subjects,TRUE).'</pre>');
+
+            }
+
+        }
+
+
+
+
+
+/*
+        if(!empty($subjects)){
+
+            foreach($subjects as $cid=>$context){
+
+
+                // Add children
+                if(!empty($context->field_context)){
+
+
+
+
+//////////// TODO: use organic_connectivity_extract_connections() here to first add parents to the context
+///////////                   ///////then use parents data to set the children arrays.......
+
+
+$context->parents=array();
+
+                    foreach($context->field_context[LANGUAGE_NONE] as $contextcontext){
+                        $context_collection_set = entity_load('field_collection_item',array($contextcontext['value']));
+                        if(!empty($context_collection_set[$contextcontext['value']]->field_connection)){
+
+
+
+
+$context_nid = $context_collection_set[$contextcontext['value']]->field_connection[LANGUAGE_NONE][0]['target_id'];
+
+
+
+if(!empty($context_collection_set[$contextcontext['value']]->field_notes)){
+
+    $context_notes=$context_collection_set[$contextcontext['value']]->field_notes[LANGUAGE_NONE][0]['value'];
+
+    //add also as parents to the current {aside from the main task of adding children}
+    $context->parents[$context_nid][1]=$context_notes;
+
+}
+else
+    $context_notes='';
+
+
+//if the context has a weight and it's 50 or more, add it as a child context of the outer loop context
+if(!empty($context_collection_set[$contextcontext['value']]->field_weight)){
+
+    $context_weight=$context_collection_set[$contextcontext['value']]->field_weight[LANGUAGE_NONE][0]['value'];
+
+
+    if($context_weight>=50&&$context_notes=='')
+
+        $subjects[$context_nid]->children[$cid]=array($context_weight,$context_notes);
+
+
+    //add also as parents to the current {aside from the main task of adding children}
+    $context->parents[$context_nid][0]=$context_weight;
+
+}
+//else $subjects[$context_nid]->children[$cid] = $context_notes;
+
+
+
+
+
+                        }
+                    }
+                }
+                //else $subjects[$cid]->rootContext=TRUE;
+
+            }
+        }
+*/
+
+        //////////////////////////// BREAK CONTEXT LIST INTO CONTEXT GROUPS ///////////////////
+        if(isset($variables['break_by_user'])&&$variables['break_by_user']==TRUE){
+            $variables['contexts_user_breaks']=array();
+            foreach($subjects as $iid=>$context){
+                $variables['contexts_user_breaks'][$context->uid][]=$context->nid;
+            }
+            #echo('<pre>'.print_r($variables['contexts_user_breaks'],TRUE).'</pre>');
+        }
+
+
+
+    }
+    if($hook=='parent_context_navigation'&&arg(0)=='node'){
+        foreach($nd->connections as $attribute){
+            if($attribute['type']==variable_get('organic_connectivity_context_prototype','')){
+                if($subjects[$attribute['nid']]->nid!=variable_get('organic_connectivity_context_prototype','')){
+                    $nd->contexts_without_context_prototype[]=$attribute;
+                }
+            }
+        }
+    }
+    //// END SUBJECT HOOKS
+
+
+}
+
+
+
+
+function organic_connectivity_intro(){
+    /// Incase subdomain sym linking needs to happen
+    /*symlink($_SERVER['DOCUMENT_ROOT'].'/sites/visionarysportsgroup.com',
+            $_SERVER['DOCUMENT_ROOT'].'/sites/visionarysports.anoml.net');*/
+    /// Incase modules need to be manually deleted
+    /*$modules=array(
+        'admin_menu',
+        'content',
+        'default',
+        'fieldgroup',
+        'filefield',
+        'imageapi',
+        'imageapi_gd',
+        'imagecache',
+        'imagecache_ui',
+        'imagefield',
+        'nodereference',
+        'optionwidgets',
+    );
+    db_delete('system')
+        ->condition('name',$modules,'IN')
+        ->condition('type','module')
+        ->execute();*/
+    /// Incase an importance update is needed with the module load ordering
+    /*db_query("UPDATE {system} SET weight = 100 WHERE name = 'organic_prototype'");
+    db_query("UPDATE {system} SET weight = 90 WHERE name = 'organic_context'");
+    db_query("UPDATE {system} SET weight = 80 WHERE name = 'organic_attribute'");
+    db_query("UPDATE {system} SET weight = 70 WHERE name = 'organic_qabalah'");
+    db_query("UPDATE {system} SET weight = 50 WHERE name = 'organic_calendar'");*/
+    /// Incase some collection fields need to be programmatically altered
+    /*$db_query_children=db_query("SELECT * FROM `node`");
+    foreach($db_query_children as $node){
+        if($node->nid>0){
+            $raw_node=node_load($node->nid);
+            $node=entity_metadata_wrapper('node', $raw_node);
+            $raw_collection=$node->field_context->value();
+            foreach($raw_collection as $item){
+                $collection=entity_metadata_wrapper('field_collection_item', $item);
+                if($collection->field_weight->value())
+                    $v=variable_get('organic_connectivity_context_prototype','');
+                elseif($collection->field_response->value())
+                    $v=variable_get('organic_connectivity_attribute_prototype','');
+                else $v=variable_get('organic_connectivity_prototype_prototype','');
+                $collection->field_attribute_type=$v;
+                $collection->save();
+            }
+        }
+    }*/
+    $viewers_menu_items=menu_tree_all_data('main-menu');
+    $viewers_menu_items=menu_tree_output($viewers_menu_items);
+    return '<div class="subtitle">organic_connectivity</div>
+<p>A platform for the description and display of nodal attributes which connect content nodes.</p>
+<h3>More info</h3>
+<div>
+ <a href="http://connectivity.orgnsm.org">http://connectivity.orgnsm.org</a><br/>
+ <a href="http://github.com/ixias/organic_connectivity">http://github.com/ixias/organic_connectivity</a>
+</div>'.drupal_render($viewers_menu_items);
+}
+
+
+
+
+function organic_connectivity_config_page(){
+    $form=array();
+    $form['organic_connectivity_attribute_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a node attribute, a TYPE of connection'),
+        '#default_value'=>variable_get('organic_connectivity_attribute_prototype',''),
+        '#description'=>t('This allows you to setup node ATTRIBUTES (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+    /*$form['organic_connectivity_attributes_restrict_to_users'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Restrict access to attributes to a list of users'),
+        '#default_value' => variable_get('organic_connectivity_attributes_restrict_to_users',''),
+        '#description' => t('Add comma separated users to give access to items (to restrict attributes to the person that created them use [creator])'),
+        '#required' => FALSE,
+    );*/
+    $form['organic_connectivity_prototype_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a node prototype'),
+        '#default_value'=>variable_get('organic_connectivity_prototype_prototype',''),
+        '#description'=>t('This allows you to setup node PROTOTYPES, like:<br/>
+                             Sephiroth<br/>
+                             Path -is connector of sephiroth - should this be connector prototype instead of 33?<br/>
+                             Subject<br/>
+                             Image<br/>
+                             Screenshot<br/>
+                             Text<br/>
+                             Discipline<br/>
+                             Book<br/>
+                             Person<br/>
+                             Bioform<br/>
+                             Project<br/>
+                             Task<br/>
+                             Connector<br/>
+                             (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+    $form['organic_connectivity_journal_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines the JOURNAL node type'),
+        '#default_value'=>variable_get('organic_connectivity_journal_prototype',''),
+        '#description'=>t('This allows you to setup JOURNAL nodes (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+
+    $form['organic_connectivity_context_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a node subject/topic/category'),
+        '#default_value'=>variable_get('organic_connectivity_context_prototype',''),
+        '#description'=>t('This allows you to create SUBJECT nodes (by connecting them to this node prototypically)'),
+        '#required'=>FALSE,
+    );
+    $form['organic_context_categories_restrict_to_users']=array(
+        '#type'=>'textfield',
+        '#title'=>t('Restrict access to categories lists to a list of users'),
+        '#default_value'=>variable_get('organic_context_categories_restrict_to_users',''),
+        '#description'=>t('Add comma separated users to give access to items (to restrict categories to the person that created them use [creator])'),
+        '#required'=>FALSE,
+    );
+
+
+    $form['organic_context_items_restrict_to_users'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Restrict access to items lists to a list of users'),
+        '#default_value' => variable_get('organic_context_items_restrict_to_users',''),
+        '#description' => t('Add comma separated users to give access to items (to restrict items to the person that created them use [creator])'),
+        '#required' => FALSE,
+    );
+
+
+    return system_settings_form($form);
+
+}
+
+
+
+
+
+
+
+function organic_connectivity_build_form(){
+    drupal_set_title('Add Thing');
+    // get the standard node form;
+    // we cannot get it from drupal_get_form() because we need the form_state reference,
+    // so we copy a bit of code from node_add() and drupal_get_form()
+    global $user;
+    $form_state = array();
+    $form_state['build_info']['args'][] = (object) array(
+        'uid' => $user->uid,
+        'name' => (isset($user->name) ? $user->name : ''),
+        'type' => 'thing',
+        'language' => LANGUAGE_NONE,
+    );
+    $form = drupal_build_form('thing_node_form', $form_state);
+    // we now have exactly the form which node_add() is returning BUT
+    // we also have a reference of the form state array ready to alter;
+    // how many items do we want?
+    $num_items = 5;
+    // this is exactly what the ajax request for the add more button does
+    $form_state['field']['context'][LANGUAGE_NONE]['items_count']=$num_items;
+    // now this is important!! set a flag inside the form state so that the hook_form_alter() function
+    // is able to know when it should pre-populate (remember: hook_form_alter() will be called twice
+    // during this process)
+    #$form_state['organic_context_prepopulate'] = TRUE;
+    // reset the html ids so that our new rebuilted form will get nice ids and not form_id--2
+    drupal_static_reset('drupal_html_id');
+    // rebuild the form and return it;
+    // through drupal_rebuild_form() hook_form_alter() will be called again - this time with our
+    // prepopulate flag and 5 empty form elements ready to prefill
+    return drupal_rebuild_form($form_state['build_info']['form_id'], $form_state, $form);
+}
+
+
+
+
+
+
+
+///////// adds subjects to selectors in node edit forms /////////
+
+module_load_include('inc','node','node.pages');
+
+function organic_connectivity_form_alter(&$form,&$form_state,$form_id){
+
+    if($form_id=='thing_node_form'){
+
+        /*if( isset($form_state['organic_context_prepopulate']) && $form_state['organic_context_prepopulate'] ){
+            $delta = 0;
+            $max_delta = $form['--machine-name-of-field--'][LANGUAGE_NONE]['#max_delta'];
+            while ($delta <= $max_delta) {
+                // prepopulate whatever you like with help of #default_value'
+                $form['--machine-name-of-field--'][LANGUAGE_NONE][$delta]['#default_value'] = 'Value to show';
+                $delta++;
+            }
+        }*/
+//        print_r($form_state);
+        global $subjects;
+        #$form['field_context'][LANGUAGE_NONE][0]['field_connection'][LANGUAGE_NONE]['#options']['_none'] = '- None -';
+        #$form['field_context'][LANGUAGE_NONE][0]['field_connection'][LANGUAGE_NONE]['#options']=array(
+        #    '_none'=>'- None -',
+        #);
+        /*for($i=0;$i<count($form['field_context'][LANGUAGE_NONE]);$i++){
+            if(isset($form['field_context'][LANGUAGE_NONE][$i])){
+                foreach($subjects as $context){
+                    $form['field_context'][LANGUAGE_NONE][$i]['field_connection'][LANGUAGE_NONE]['#options'][$context->nid] = $context->title;
+                }
+            }
+        }*/
+    }
+}
+
+
+
+
+
+
+
+
+function organic_prototype_obtain_entities_by_connection_3($connectionQuery=FALSE){
+
+    $query=new EntityFieldQuery();
+
+    $query->entityCondition('entity_type','node')
+          ->entityCondition('bundle','thing')
+          ->propertyCondition('status',1);
+
+    //$query->fieldCondition('field_connection', 'nid', $connectionQuery);
+    $results = $query->execute();
+    if(array_key_exists('node',$results))
+        $results = entity_load('node',array_keys($results['node']));
+
+
+    // Optional context filter              ----------- way to speed this up?
+    if($connectionQuery){
+        $itemz = array();
+        foreach($results as $item){
+            if(!empty($item->field_context)){
+                foreach($item->field_context[LANGUAGE_NONE] as $context_id){
+                    $context_set = entity_load('field_collection_item',array($context_id['value']));
+                    if(!empty($context_set[$context_id['value']]->field_connection)
+                    &&$context_set[$context_id['value']]->field_connection[LANGUAGE_NONE][0]['target_id']==$connectionQuery)
+                        $itemz[] = $item;
+                }
+            }
+        }
+        $results = array_values($itemz);
+        $itemz = NULL;
+    }
+
+    return $results;
+
+}
+
+
+
+
+function organic_prototype_obtain_entities_by_connection_2($connectionQuery=FALSE){
+
+    $inner=new EntityFieldQuery();
+
+    $inner_r=$inner->entityCondition('entity_type','field_collection_item')
+                   ->fieldCondition('field_connection','target_id',$connectionQuery,'=')
+                     ///drupal limitation: check for NULL does not work
+                     #->fieldCondition('field_weight','value',NULL,'IS NULL')
+                     #->fieldCondition('field_weight','value',0,'=')
+                   ->execute();
+
+    if(!empty($inner_r['field_collection_item'])){
+        $keys = array_keys($inner_r['field_collection_item']);
+        $query = new EntityFieldQuery();
+        $species_r = $query->entityCondition('entity_type','node')
+//                      ->entityCondition('bundle',self::$bundle)
+                      ->fieldCondition('field_connection','value',$keys)
+                      ->execute();
+        if(!empty($species_r['node'])){
+            return node_load_multiple(array_keys($species_r['node']));
+        }
+    }
+
+}
+
+
+
+
+function organic_prototype_obtain_entities_by_connection($connectionQuery=NULL,$connectionType=NULL,$loadNodes=FALSE,$unpub=0){
+
+
+    //if(!db_table_exists('n')) return;
+
+
+    #timer_start('db_select');
+    $query=db_select('node','n');
+    $query->fields('n',array('nid','uid','status','created','title'));
+
+    if($unpub===2) $query->condition('status',0,'=');
+    elseif($unpub===0) $query->condition('status',0,'>');
+
+
+    // The field collection group:
+    $query->leftJoin('field_data_field_context','fcs','fcs.entity_id=n.nid');
+
+    $query->leftJoin('field_data_field_attribute_type','fdfattr','fdfattr.entity_id=fcs.field_context_value');
+    $query->leftJoin('field_data_field_connection','fdfcon','fdfcon.entity_id=fcs.field_context_value');
+    //$query->leftJoin('field_data_field_weight','fdfwei','fdfwei.entity_id=fcs.field_context_value');
+    //$query->leftJoin('field_data_field_response','fdfres','fdfres.entity_id=fcs.field_context_value');
+    $query->fields('fdfattr');
+    $query->fields('fdfcon');
+    //$query->fields('fdfwei');
+    //$query->fields('fdfres');
+
+    ////// SET CONNECTION CONDITIONS //////
+
+    if(isset($connectionQuery)){
+        $query->condition('field_connection_target_id',$connectionQuery);
+        if($connectionType=='prototypical'){
+            $query->condition('field_attribute_type_target_id',variable_get('organic_connectivity_prototype_prototype',''));
+        }
+        elseif($connectionType=='contextual'){
+            $query->condition('field_attribute_type_target_id',variable_get('organic_connectivity_context_prototype',''));
+            //// these are checked while adding children... need for ITEMS queries?
+        }
+        elseif($connectionType=='attributional'){
+            $query->condition('field_attribute_type_target_id',variable_get('organic_connectivity_attribute_prototype',''));
+        }
+    }
+
+    $query->orderBy('nid');
+    //$query->distinct();
+    $results=$query->execute();
+    #debug(timer_read('db_select').' ms ~ '.$connectionQuery);
+
+    //echo('<h3>Results for '.$connectionQuery.' via '.$connectionType.'</h3>');
+    //if(isset($results)) foreach($results as $result) echo($result->nid);
+
+    //Build NID array
+    foreach($results as $result) $nids[]=$result->nid;
+
+    //Rerturn NID array with or without fully-loaded node data
+    if(isset($nids)){
+        if($loadNodes) return node_load_multiple($nids);
+        else return $nids;
+    }
+
+
+    /*$rezultz=array();
+    foreach($results as $result){
+
+        $rezultz[$result->nid]['nid']=$result->nid;
+        $rezultz[$result->nid]['title']=$result->title;
+
+        $rezultz[$result->nid]['connections']=organic_connectivity_extract_connections(&$context_field,$remove=NULL,$load_nodes=FALSE)
+
+        / *$rezultz[$result->nid]['connections'][$result->field_connection_target_id]=array(
+            'nid'=>$result->field_connection_target_id,
+            'weight'=>$result->field_weight_value,
+            'response'=>$result->field_response_value,
+        );* /
+
+    }
+    echo('<pre>'.print_r($rezultz,TRUE).'</pre>');
+    return $rezultz;*/
+
+}
+
+
+
+
+
+
+
+function organic_connectivity_extract_connections(&$context_field,$remove=NULL){//,$load_nodes=FALSE
+
+    $node_attributes=array();
+
+    if(!empty($context_field[LANGUAGE_NONE])){
+        foreach($context_field[LANGUAGE_NONE] as $attribute){
+
+            ///// Get the collection set
+            $context_collection_set=entity_load('field_collection_item',array($attribute['value']));
+
+            ///// Get the collection category weight
+            if(!empty($context_collection_set[$attribute['value']]->field_weight))
+                $context_weight=$context_collection_set[$attribute['value']]->field_weight[LANGUAGE_NONE][0]['value'];
+            else $context_weight='';
+
+            ///// Get the collection attribute response
+            if(!empty($context_collection_set[$attribute['value']]->field_response))
+                $context_response=$context_collection_set[$attribute['value']]->field_response[LANGUAGE_NONE][0]['value'];
+            else $context_response='';
+
+            ///// Get the collection attribute type
+            if(!empty($context_collection_set[$attribute['value']]->field_attribute_type))
+                $context_type=$context_collection_set[$attribute['value']]->field_attribute_type[LANGUAGE_NONE][0]['target_id'];
+            else $context_type='';
+
+            ///// Get the collection category notes
+            if(!empty($context_collection_set[$attribute['value']]->field_notes))
+                $context_notes=$context_collection_set[$attribute['value']]->field_notes[LANGUAGE_NONE][0]['value'];
+            else $context_notes='';
+
+            ///// Get the collection connection nid
+            if(!empty($context_collection_set[$attribute['value']]->field_connection)){
+
+                $context_nid=$context_collection_set[$attribute['value']]->field_connection[LANGUAGE_NONE][0]['target_id'];
+
+                //if($remove){
+                    if($context_nid!=$remove){
+
+                        $node_attributes[$attribute['value']]=array(
+                            'type'=>$context_type,
+                            'nid'=>$context_nid,
+                            'weight'=>$context_weight,
+                            'response'=>$context_response,
+                            'notes'=>$context_notes,
+                        );
+
+                        //if($load_nodes)
+                            //$node_attributes[$attribute['value']]['content']=node_load($context_nid);
+
+                    }
+                //}
+
+            }
+
+
+
+        }
+    }
+    //print_r($node_attributes);
+    return $node_attributes;
+
+}
+
+
+
+
+
+
+
+
+
+
+function print_context_level($group,$image_style,$mine_children,$show_random_child,$parent,$show_nid){
+
+    global $subjects;
+
+    echo('                <ul>');
+
+    foreach($group as $cid=>$details){
+
+        $item_go=TRUE;#if( ((!$context||$context==21) && $subjects[$cid]->isInRootButHasOtherParent) && $cid!=1) $item_go=FALSE;
+
+        #echo($context.'~~~'.$cid.'~~'.$subjects[$cid]->isInRootButHasOtherParent.'<br/>');
+
+        if($item_go):
+
+            $classes = 'nav-'.$subjects[$cid]->nid;
+
+            ##########################################################################################
+            ##########################################################################################
+            ##########################################################################################
+            /////////////// use weights to determine the selections............./////////////////////
+            if($subjects[$cid]->nid==arg(1)) $classes.=' active';
+            ##########################################################################################
+            //elseif( $details->nid == $node_contexts[0] ) $return .= '<li class="touch">\n';
+            //elseif( in_array( $details->nid, $node_contexts ) ) $return .= '<li class="touch">\n';
+            //elseif( in_array( $details->nid, $node_themes ) ) $return .= '<li class="thematique">\n';
+            ##########################################################################################
+            ##########################################################################################
+            ##########################################################################################
+
+            echo('                    <li class="'.$classes.'">');
+
+            echo('                        <a href="/'.drupal_get_path_alias('node/'.$subjects[$cid]->nid).'">');
+
+
+
+
+if($show_random_child){
+
+    echo('<span class="children-of-context-in-tree">');
+
+    if(isset($subjects[$cid]->uses)&&count($subjects[$cid]->uses)){
+
+        for($i=0;$i<$show_random_child;$i++){
+
+            #print_r($subjects[$cid]->uses);
+            $random_key=array_rand($subjects[$cid]->uses,1);
+            #echo($random_key);
+            $nd_rndm_child=node_load($subjects[$cid]->uses[$random_key]);
+            #print_r($nd_rndm_child);
+
+            if(!empty($nd_rndm_child->field_images)){
+
+                echo('    <img src="'.image_style_url('thumbnail',$nd_rndm_child->field_images[LANGUAGE_NONE][0]['uri']).'" alt="" style="height:50px;"/>');
+
+            }
+        }
+    }
+    echo('</span>');
+
+}
+
+
+
+
+
+if(!empty($subjects[$cid]->field_images)):
+echo('                            <img src="'.image_style_url($image_style,$subjects[$cid]->field_images[LANGUAGE_NONE][0]['uri']).'" alt=""/>');
+endif;
+
+if($show_nid) echo('<span class="numerological">'.$cid.'</span>');
+
+echo('                            <span class="title">'.$subjects[$cid]->title.'</span>');
+
+if(!empty($subjects[$cid]->field_subtitle)):
+    echo('                            <span class="subtitle">'.$subjects[$cid]->field_subtitle[LANGUAGE_NONE][0]["value"].'</span>');
+endif;
+
+if($mine_children&&isset($subjects[$cid]->uses)&&count($subjects[$cid]->uses)>0):
+    echo('                            <span class="details">'.count($subjects[$cid]->uses).'</span>');
+endif;
+
+
+echo('                        </a>');
+
+
+
+////// RECUR ////////
+
+if(!empty($subjects[$cid]->children)&&$cid!=$parent){
+
+    print_context_level($subjects[$cid]->children,$image_style,$mine_children,$show_random_child,$cid,$show_nid);
+
+    /*echo(
+        theme(
+            'context_layer',
+            array(
+                'context'=>$cid,
+                'image_style'=>$image_style,
+                'mine_children'=>$mine_children,
+                'show_random_child'=>$show_random_child,
+                'parent'=>$cid,
+                'show_nid'=>$show_nid,
+            )
+        )
+    );*/
+
+}
+
+echo('                    </li>');
+
+endif;
+}
+echo('                </ul>');
+
+
+    #}
+
+
+} //end print_context_level function declaration
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////             The templates for the JSON feeds for infovis are below here:
+
+
+
+
+
+
+
+
+function organic_connectivity_json_hierarchical(){
+
+    global $subjects;
+    if(empty($subjects)){
+        $variables=array();
+        organic_connectivity_preprocess($variables,'json_contexts');
+    }
+
+    $arr=array();
+    foreach($subjects as $nid=>$context){
+
+        $arrr['name']=$context->nid;
+        $arrr['title']=$context->title;
+        $arrr['size']=count($context->uses);
+        $arrr['imports']=array();
+
+        if(isset($context->children)){
+            foreach($context->children as $nid_child=>$context_child){
+                //if($context_child['weight']>=50){
+                   array_push($arrr['imports'],$nid_child);
+                //}
+            }
+        }
+
+        array_push($arr,$arrr);
+
+    }
+
+    return $arr;
+
+}
+
+
+
+
+
+
+function organic_connectivity_json_ForceDirected(){
+
+    global $subjects;
+    if(empty($subjects)){
+        $variables=array();
+        organic_connectivity_preprocess($variables,'json_contexts');
+    }
+
+    $arr=array(
+        'nodes'=>array(),
+        'links'=>array(),
+    );
+
+    //$hold_up=array();
+    foreach($subjects as $nid=>$context){
+
+        $arrr=array(
+            'name'=>$context->title,
+            'group'=>rand(1,7),
+            //'group'=>count($context->uses),
+            'arraySpot'=>count($arr['nodes']),
+            'id'=>$context->nid,
+        );
+
+        //$hold_up[$context->nid]=
+        array_push($arr['nodes'],$arrr)-1;
+
+    }
+
+
+
+
+
+    foreach($subjects as $nid=>$context){
+
+        if(isset($context->children)){
+            foreach($context->children as $nid_child=>$context_child){
+
+                $weight_key=search_for_attribute(variable_get('organic_connectivity_context_prototype',''),$nid,$subjects[$nid_child]->connections);
+
+                $arrr=array(
+                   'source'=>$nid,
+                   'target'=>$nid_child,
+                   'value'=>ceil($subjects[$nid_child]->connections[$weight_key]['weight']/20)+1,
+                );
+
+                array_push($arr['links'],$arrr);
+
+            }
+        }
+
+    }
+
+    return $arr;
+
+}
+
+
+
+
+function organic_connectivity_json_sunburst_d3(){
+    global $subjects;
+    if(empty($subjects)){
+        $variables=array();
+        organic_connectivity_preprocess($variables,'json_contexts');
+    }
+    $arr=organic_context_json_contexts_sunburst_d3_child_adder(
+            $subjects,
+            1
+//            variable_get('organic_connectivity_context_prototype','')
+    );
+    return $arr;
+}
+
+
+
+
+function organic_connectivity_json_Sunburst(){
+
+    $variables=array();
+    organic_connectivity_preprocess($variables,'json_contexts');
+
+    global $subjects;
+    global $contexts_total_uses;
+    $JSON_SUNBURST=array();
+
+
+    foreach($subjects as $nid=>$context){
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////// This is actually incorrect because
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////// here percentage should be calculated
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////// depending on which level of the burst
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////// we are currently on.
+        if(isset($context->uses)) $percentage=round((count($context->uses)/$contexts_total_uses)*100);
+        if($percentage==0) $percentage=1;////Fix for auto heights
+
+
+        $arrr=array();
+        $arrr['id'] = 'node'.$nid;
+        $arrr['name'] = $context->nid.') '.$context->title.'_'.$percentage.'%';
+
+
+
+        if($nid!=1){
+            $arrr['data'] = array(
+                '$angularWidth' => $percentage,
+                '$color' => '#'.rand(0,9).rand(0,9).rand(0,9),
+                '$height' => ($percentage*30),
+            );
+        } else {
+            $arrr['data'] = array(
+                '$type' => 'none',
+            );
+        }
+
+
+
+        $arrr['adjacencies']=array();
+        if(isset($context->children)){
+            foreach($context->children as $nid_child=>$context_child){
+
+        if($nid!=1){
+                $arrrr=array(
+                   'nodeTo' => 'node'.$nid_child,
+                   'data' => array(
+                       '$color' => '#ccffdd',
+                       '$lineWidth' => ($subjects[$nid_child]->connections[$nid]['weight']/35),
+                   )
+                );
+        }
+        else{
+                $arrrr=array(
+                   'nodeTo' => 'node'.$nid_child,
+                   'data' => array(
+                       '$type' => 'none',
+                   )
+                );
+        }
+                array_push($arrr['adjacencies'],$arrrr);
+            }
+        }
+
+
+
+
+
+        array_push($JSON_SUNBURST,$arrr);
+
+
+    }
+
+
+    return $JSON_SUNBURST;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_connectivity_json_Sunburst_flat(){
+
+    global $subjects;
+    if(empty($subjects)){
+        $variables=array();
+        organic_connectivity_preprocess($variables,'json_contexts');
+    }
+
+
+
+    $JSON_SUNBURST=array();
+
+    ///////////////////////// begin: ADD NODE ZERO
+    $arrr=array();
+    $arrr['id'] = 'node0';
+    $arrr['name'] = '';
+    $arrr['data'] = array('$type'=>'none');
+    $arrrr=array();
+    foreach($subjects as $nid=>$context){
+        $arrrr[]=array(
+            'nodeTo'=>'node'.$context->nid,
+            'data'=>array(
+                '$type'=>'none',
+            ),
+        );
+    }
+    $arrr['adjacencies'] = $arrrr;
+    array_push($JSON_SUNBURST,$arrr);
+    ///////////////////////// end: ADD NODE ZERO
+
+
+
+    global $contexts_total_uses;
+    //$processedNodesTracker=array();
+
+    foreach($subjects as $nid=>$context){
+
+
+
+        if(isset($context->uses)) $percentage=round((count($context->uses)/$contexts_total_uses)*100);
+
+        if($percentage==0) $percentage=1;////Fix for auto heights
+
+        $arrr=array();
+        $arrr['id']='node'.$nid;
+        $arrr['name'] = $context->nid.') '.$context->title.'_'.$percentage.'%';
+
+        $arrr['data'] = array(
+            '$angularWidth' => $percentage,
+            '$color' => '#'.rand(0,9).rand(0,9).rand(0,9),
+            '$height' => ($percentage*30),
+        );
+
+
+        $arrr['adjacencies']=array();
+        if(isset($context->children)){
+            foreach($context->children as $nid_child=>$context_child){
+
+//if(!in_array($processedNodesTracker,$nid_child)){
+                    $arrrr=array(
+                       'nodeTo' => 'node'.$nid_child,
+                       'data' => array(
+                           '$color' => '#ccffdd',
+                           '$lineWidth' => ($subjects[$nid_child]->connections[$nid]['weight']/35),
+                       )
+                    );
+//} else {
+                    //$arrrr='node'.$nid_child;
+//}
+
+                array_push($arrr['adjacencies'],$arrrr);
+
+//$processedNodesTracker[]=$nid_child;
+
+            }
+        }
+
+        array_push($JSON_SUNBURST,$arrr);
+
+    }
+
+    return $JSON_SUNBURST;
+
+}
+
+
+
+
+?>

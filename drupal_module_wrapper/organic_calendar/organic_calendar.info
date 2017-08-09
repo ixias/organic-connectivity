@@ -1,0 +1,7 @@
+name = Organic Calendar
+description = Dating templates
+package = Organic Connectivity
+core = 7.x
+files[] = organic_calendar.module;
+;files[] = organic_calendar.install
+;configure = admin/config/organic_connectivity

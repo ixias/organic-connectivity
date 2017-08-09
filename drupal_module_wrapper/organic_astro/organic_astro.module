@@ -1,0 +1,166 @@
+<?php
+
+
+
+
+function organic_astro_menu(){
+    return array(
+        'ephemeris' => array(
+            'title' => 'Ephemeris',
+            'description' => '...',
+            'page callback' => 'organic_astro_ephemeris',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+            'weight' => '4',
+        ),
+        'moon'=>array(
+            'title' => 'Moon',
+            'description' => '...',
+            'page callback' => 'organic_astro_moon',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+            'weight' => '5',
+        ),
+        'date'=>array(
+            'title' => 'Date',
+            'description' => '...',
+            'page callback' => 'organic_astro_date',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+            'weight' => '6',
+        ),
+    );
+}
+
+
+
+
+function organic_astro_form_organic_prototype_config_page_alter(&$form,&$form_state,$form_id){
+    $form['organic_connectivity_zodiac_prototype'] = array(
+        '#type' => 'textfield',
+        '#title' => t('The ID of the node that defines a ZODIACAL node'),
+        '#default_value' => variable_get('organic_connectivity_zodiac_prototype',''),
+        '#description' => t('This allows you to setup ZODIAC nodes (by connecting them to this node)'),
+        '#required' => FALSE,
+    );
+    $form['organic_connectivity_planet_prototype'] = array(
+        '#type' => 'textfield',
+        '#title' => t('The ID of the node that defines a PLANETARY node'),
+        '#default_value' => variable_get('organic_connectivity_planet_prototype',''),
+        '#description' => t('This allows you to setup PLANET nodes (by connecting them to this node)'),
+        '#required' => FALSE,
+    );
+    return $form;
+}
+
+
+
+
+function organic_astro_ephemeris(){
+
+    #http://www.findyourfate.com/astrology/ephemeris/ephemeris.html
+
+    include_once("/homepages/21/d93015512/htdocs/library/organic_astro/lib.php");
+    global $months;
+
+    $return="<section id=\"ephemeris\">\n";
+    $return.="<h3>Current month: ".$months[date('n')]." ".date('Y')."</h3>\n";
+
+    $currentMonth=snagEphemerisMonth('/homepages/21/d93015512/htdocs/library/organic_astro/ephemeris'.'/'.date('Y').'/'.date('m').'.txt');
+
+    $return.=printEphemerisMonth($currentMonth,date('n'),date('Y'));
+    $return.='<hr/>';
+
+
+    $return.=printEphemerisYears('/homepages/21/d93015512/htdocs/library/organic_astro/ephemeris');
+
+    $return.="</section>\n\n";
+
+    return $return;
+
+}
+
+
+
+
+function organic_astro_dashboard_widget(){
+
+    include_once("/homepages/21/d93015512/htdocs/library/organic_astro/lib.php");
+
+    $eph=snagEphemerisMonth("/homepages/21/d93015512/htdocs/library/organic_astro/ephemeris/".date("Y")."/".date("m").".txt");
+
+    $return="";
+
+    #$return .="<pre>".print_r($eph,TRUE)."</pre>\n";
+    #$return .="<pre>".print_r($eph[date("j")],TRUE)."</pre>\n";
+
+    $return.=printEphemerisToday( $eph, date('m'), date('Y') );
+
+
+    #include_once("/homepages/21/d93015512/htdocs/drupal/sites/all/modules/organic_connectivity/organic_astro/zodiac.php");
+    global $zodiac;
+    foreach($zodiac as $zsign){
+        if(strpos($eph[date("j")][2],$zsign[0])){
+            $return.="<div><abbr title=\"Solar\">&#8857;</abbr> in ".substr($eph[date("j")][2],0,2)."&#176; of ".$zsign[1]."</div>\n";
+        }
+    }
+    foreach($zodiac as $zsign){
+        if(strpos($eph[date("j")][3],$zsign[0])){
+            $return.="<div><abbr title=\"Lunar\">&#9790;</abbr> in ".substr($eph[date("j")][3],0,2)."&#176; of ".$zsign[1]."<div><strong>Phase</strong>: ".moon_phase(date('Y'),date('m'),date('d'))."% Full</div></div>\n";
+        }
+    }
+
+    return $return;
+
+}
+
+
+
+
+
+
+
+
+
+
+function organic_astro_date(){
+    $return='';
+
+    //calculate thelemic year
+    $year_cycles = floor((date("Y") - 1904) / 22);
+    $year_cycles_remainder = (date("Y") - 1904) % 22;
+
+    $return .= "<strong>&#230;r&#230; nov&#230;</strong>Anno " . romanNumerals($year_cycles) . strtolower(romanNumerals($year_cycles_remainder)) . "\n";
+    $return .= "(" . $year_cycles.":" . $year_cycles_remainder . ")\n";
+
+    $return .= "    <div>\n";
+    $return .= "        <div>\n";
+    $return .= "            <strong>&#230;r&#230; vulgari</strong>Anno ".romanNumerals(date("Y")) ." (". date("Y").")\n";
+    $return .= "        </div>\n";
+    $return .= "        <div>\n";
+    $return .= "            <strong>Gregorian</strong>".date("M") ." ". date("d")." (".date("Y-m-d").")\n";
+    $return .= "        </div>\n";
+    $return .= "        <div>\n";
+    $return .= "            <strong>Day</strong>".date("l")."\n";
+    $return .= "        </div>\n";
+    $return .= "        <div>\n";
+    $return .= "            <strong>Your computer</strong>?\n";
+    $return .= "        </div>\n";
+    $return .= "    </div>\n";
+
+    /*$return.=theme('date_month_page',array(
+        'year'=>date('Y'),
+        'month'=>date('m'),
+    ));*/
+
+    return $return;
+}
+
+
+
+
+function organic_astro_moon(){
+    include_once("/homepages/21/d93015512/htdocs/library/organic_astro/lib.php");
+    return '<div id="moon-phase"><strong>Moon phase</strong>'.moon_phase(date('Y'),date('m'),date('d')).'</div>'."\n";
+}
+?>

@@ -1,0 +1,870 @@
+<?php
+
+function organic_planner_menu(){
+    return array(
+        'dashboard'=>array(
+            'title'=>'Dashboard',
+            'description'=>'At a Glance',
+            'page callback'=>'organic_planner_dashboard',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'1',
+        ),
+        'checklist'=>array(
+            'title'=>'Checklist',
+            'description'=>'List of Action Items',
+            'page callback'=>'organic_planner_checklist',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'2',
+        ),
+        'taskedit'=>array(
+            'title'=>'Task Editor',
+            'description'=>'Simple Task Editor',
+            'page callback'=>'organic_planner_task_editor',
+            'access callback'=>'organic_planner_edit_access',
+        ),
+        'notebook'=>array(
+            'title'=>'Notebook',
+            'description'=>'List of Notes',
+            'page callback'=>'organic_planner_notes',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'3',
+        ),
+        'focii'=>array(
+            'title'=>'Focii',
+            'description'=>'...',
+            'page callback'=>'organic_planner_activities_days',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'5',
+        ),
+        'focii/edit'=>array(
+            'title'=>'Edit',
+            'description'=>'Edit focii',
+            'page callback'=>'organic_planner_display_db_edit',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'6',
+        ),
+        'projects'=>array(
+            'title'=>'Project',
+            'description'=>'Projects via PROJECT prototype',
+            'page callback'=>'theme',
+            'page arguments'=>array('children',array(
+                'by_type'=>variable_get('organic_connectivity_project_prototype',''),
+                'perpage'=>100,
+                'show_multi_image'=>TRUE,
+                'ordering'=>'date',
+                'show_pagination'=>TRUE,
+                'show_contexts'=>1,
+                'show_outer_contexts'=>TRUE,
+                'show_random_child'=>FALSE,
+                'show_children'=>FALSE,
+                'break_by_contexts'=>FALSE,
+                'show_sorting'=>TRUE,
+                'show_displays'=>TRUE,
+                'show_date'=>'Y-m-d',
+                'show_heading'=>TRUE,
+            )),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'icalendar'=>array(
+            'title'=>'iCalendar',
+            'description'=>'Events in iCal format',
+            'page callback'=>'theme',
+            'page arguments' => array('icalendar'),
+            'delivery callback'=>'organic_planner_deliver_text',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+            'weight'=>'7',
+        ),
+    );
+}
+function organic_planner_theme(){
+    return array(
+        'icalendar'=>array(
+            'template'=>'icalendar',
+            'path'=>drupal_get_path('module','organic_planner').'/lib',
+        ),
+    );
+}
+function organic_planner_preprocess(&$variables,$hook){
+    if($hook=='icalendar'){
+        $variables['events']=organic_prototype_obtain_entities_by_connection(
+            variable_get('organic_connectivity_event_prototype',''),
+            'prototypical',
+            TRUE
+        );
+        foreach($variables['events'] as $eid=>$event){
+            if(date('U')>date('U',$event->created))
+                unset($variables['events'][$eid]);
+        }
+    }
+}
+function organic_planner_deliver_text($page_callback_result){
+    drupal_add_http_header('Content-Type','text/calendar; charset=utf-8');
+    $page_callback_result=str_replace("\n","\r\n",$page_callback_result);
+    echo(render($page_callback_result));
+}
+
+function organic_planner_form_organic_prototype_config_page_alter(&$form,&$form_state,$form_id){
+    $form['organic_connectivity_project_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a PROJECT node'),
+        '#default_value'=>variable_get('organic_connectivity_project_prototype',''),
+        '#description'=>t('This allows you to setup PROJECT nodes (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+    $form['organic_connectivity_task_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a TASK node'),
+        '#default_value'=>variable_get('organic_connectivity_task_prototype',''),
+        '#description'=>t('This allows you to setup TASK nodes (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+    $form['organic_connectivity_note_prototype']=array(
+        '#type'=>'textfield',
+        '#title'=>t('The ID of the node that defines a NOTE node'),
+        '#default_value'=>variable_get('organic_connectivity_note_prototype',''),
+        '#description'=>t('This allows you to setup NOTE nodes (by connecting them to this node)'),
+        '#required'=>FALSE,
+    );
+    return $form;
+}
+
+
+function organic_planner_edit_access(){
+    global $user;
+    if($user->uid!='0') return TRUE;
+    return FALSE;
+}
+
+
+
+
+
+function organic_planner_dashboard(){
+
+    $return="<div id=\"dashboard\">\n";
+    $return.="<div id=\"c3\" style=\"float:right;width:35%;overflow:hidden;\">\n";
+
+    $plan_node=node_load(182);
+    $return.="<h3>".$plan_node->title."</h3>\n";
+    $return.="<div>".$plan_node->body[LANGUAGE_NONE][0]['value']."</div>\n";
+    $return.='<a href="/node/182/edit">edit plan</a>';
+
+    $return.="<h3>Geography<span>Location</span></h3>\n";
+
+
+    //$cobj=curl_init('http://w1.weather.gov/xml/current_obs/PHKO.xml');
+
+    //$cobj=curl_init('http://forecast.weather.gov/MapClick.php?lat=19.4656&lon=-155.136&unit=0&lg=english&FcstType=dwml');
+
+    /// Weather Underground API Key: 9bcc4731ac06ac5b
+    ///
+    $cobj=curl_init('http://api.wunderground.com/api/9bcc4731ac06ac5b/conditions/q/HI/Pahoa.xml');
+
+    curl_setopt($cobj,CURLOPT_RETURNTRANSFER,1);
+    curl_setopt($cobj,CURLOPT_CONNECTTIMEOUT,0);//0=no timeout
+    $weather_raw=curl_exec($cobj);
+    curl_close($cobj);
+
+    if($weather_raw){
+        $weatherXML=new DOMDocument();
+        $weatherXML->loadXML($weather_raw);
+        #$return.='<pre>'.$weatherXML->saveHTML().'</pre>';
+    }
+
+
+    $return.="<div class=\"now_attribute\">\n";
+    $return.="    <div>\n";
+    /// Show textual location per weather feed:::
+    $locationQuery=new Domxpath($weatherXML);
+    $locationResult=$locationQuery->query('//observation_location/full');
+    foreach($locationResult as $result){
+        $return.="        <div>".$result->textContent."</div>\n";
+    }
+    $return.="    </div>\n";
+    $return.="</div>\n";
+
+
+    $return.="<div class=\"now_attribute\">\n";
+    $return.="    <div>\n";
+    /// Show textual lat/long per weather feed:::
+    $locationQuery=new Domxpath($weatherXML);
+    $locationResult1=$locationQuery->query('//observation_location/latitude');
+    $locationResult2=$locationQuery->query('//observation_location/longitude');
+    foreach($locationResult1 as $result){
+        $return.="        <div>".$result->textContent;
+        $lat=$result->textContent;
+    }
+    foreach($locationResult2 as $result){
+        $return.=", ".$result->textContent."</div>\n";
+        $long=$result->textContent;
+    }
+    $return.="    </div>\n";
+    $return.="</div>\n";
+
+
+
+    /// Add script for googleMaps:::
+
+$return.='
+
+    <script type="text/javascript">
+
+
+function initialize(){
+
+    var myLatLng={lat: '.$lat.', lng: '.$long.'};
+
+    var map=new google.maps.Map(document.getElementById("map-canvas"),{
+        center: myLatLng,
+        zoom: 10,
+        mapTypeId: google.maps.MapTypeId.HYBRID
+    });
+
+    var marker=new google.maps.Marker({
+        position: myLatLng,
+        map: map,
+        title: "Hello World!"
+    });
+
+/*
+  var image="images/beachflag.png";
+  var beachMarker=new google.maps.Marker({
+    position: {lat: -33.890, lng: 151.274},
+    map: map,
+    icon: image}
+*/
+}
+
+
+function loadScript(){
+    var script=document.createElement("script");
+    script.type="text/javascript";
+    script.src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyCuOz5c7yJAfUekRso9IbMWONoFzE-Oyww&" +
+                 "callback=initialize";
+    document.body.appendChild(script);
+}
+
+
+window.onload=loadScript;
+
+
+    </script>'."\n";
+
+
+    /// Add html container for googleMaps:::
+    $return.='<div id="map-canvas" style="height:300px;"></div>'."\n";
+
+    $return.="<div style=\"float:right;width:50%;\">\n";
+    $return.="<h3>Webcam</h3>\n";
+    $return.="<div class=\"now_attribute\">\n";
+    $return.="    <div><img src=\"http://ixias.orgnsm.org/camoff.jpg\" alt=\"Webcam\" id=\"webcamImage\"/></div>\n";
+    $return.="</div>\n";
+    $return.="</div>\n\n";
+
+
+    $return.="<h3>Sky<span>Weather</span></h3>\n";
+    $return.="<div class=\"now_attribute\">\n";
+    $return.="    <div id=\"sky_condition\">\n";
+
+    if($weatherXML){
+        $temperatureQuery=new Domxpath($weatherXML);
+        $temperatureResult=$temperatureQuery->query('//temp_f');
+        foreach($temperatureResult as $result){
+            $return.="        <div id=\"temperature\">".$result->textContent."&#176;F</div>\n";
+        }
+
+        $weatherQuery=new Domxpath($weatherXML);
+        $weatherResult=$weatherQuery->query('//icon');
+        foreach($weatherResult as $result){
+            $return.="        <div id=\"weather\">".$result->textContent."</div>\n";
+        }
+
+//    $return.="        <img src=\"/sites/planner.orgnsm.org/files/weather/33.png\" alt=\"sky condition\"/>\n";
+
+        $weatherImgQuery=new Domxpath($weatherXML);
+        $weatherImgResult=$weatherImgQuery->query('//current_observation/icon_url');
+        foreach($weatherImgResult as $result){
+            $return.="        <img src=\"".$result->textContent."\" alt=\"\"/>\n";
+        }
+
+    }
+    else $return.="Weather feed is broken";
+    $return.="    </div>\n";
+    $return.="</div>\n";
+
+
+
+
+
+    $return.="</div><!--./end #c3-->\n\n";
+
+    $return.="<div id=\"c2\" style=\"float:right;width:35%;overflow:hidden;\">\n";
+
+
+    $projects=organic_prototype_obtain_entities_by_connection(
+        variable_get('organic_connectivity_project_prototype',''),
+        'prototypical',
+        TRUE
+    );
+    usort($projects,'date_comparison');
+    $return.='<h3><span>'.count($projects).'</span><a href="/projects">Projects</a></h3>';
+    $return.='<ul id="dashprojs">';
+    $i=0;
+    $lim=25;
+    foreach($projects as $task){
+        if($i<$lim){
+            $return.='<li>';
+            $return.='<a href="/'.drupal_get_path_alias('node/'.$task->nid).'">';
+            $return.='<span class="title">'.$task->title.'</span>';
+            if(!empty($task->field_images))
+                $return.="<img src=\"".image_style_url('thumbnail',$task->field_images[LANGUAGE_NONE][0]["uri"])."\" alt=\"Associated Project Thumbnail\"/>\n";
+            $return.='</a>';
+            $return.='</li>';
+            $i++;
+        }
+    }
+    $return.='</ul>';
+
+
+
+$return.='
+            <section id="your-graphs">
+                <h3>Contexts<span>Categories</span></h3>
+                <section>
+                    <div class="subtitle"><a href="/connectivity/neuron" class="morelink">Force-Directed</a></div>
+                    <svg id="d3_force" style="height:300px;"></svg>
+                </section>
+                <section>
+                    <h3>Prototypes<span>Classes</span></h3>
+                    <p>...</p>
+                </section>
+            </section>';
+
+    $return.=theme('date_month_page',array(
+        'year'=>date('Y'),
+        'month'=>date('m'),
+    ));
+$return.='                    <a href="/items/calendar" class="morelink"><span>More</span>Calendars</a>';
+
+    $return.='</div><!--./end #c2-->'."\n\n";
+
+
+    $return.="<div id=\"c1\" style=\"float:left;width:30%;\">\n";
+    $return.="
+                <section>
+                    <svg id=\"d3_sunburst\" style=\"height:250px;\"></svg>
+                    <!--a href=\"/connectivity/sunburst\" class=\"morelink\"><span>More</span>Sunburst</a-->
+                </section>";
+
+    $tasks=organic_prototype_obtain_entities_by_connection(
+        variable_get('organic_connectivity_task_prototype',''),
+        'prototypical',
+        TRUE
+    );
+    usort($tasks,'weight_comparison');
+    //usort($tasks,'date_comparison');
+    $return.='<h3><span>'.count($tasks).'</span><a href="/checklist">Tasks</a></h3>';
+    $return.='<ul>';
+    $i=0;
+    $lim=8;
+    foreach($tasks as $task){
+        if($i<$lim){
+            $return.='<li><a href="/node/'.$task->nid.'">'.$task->title.'</a></li>';
+            $i++;
+        }
+    }
+    $return.='</ul>';
+
+
+
+
+
+    $notes=organic_prototype_obtain_entities_by_connection(
+        variable_get('organic_connectivity_note_prototype',''),
+        'prototypical',
+        TRUE
+    );
+    usort($notes,'date_comparison');
+    $return.='<h3><span>'.count($notes).'</span><a href="/notebook">Notes</a></h3>';
+    $return.='<ul>';
+    $i=0;
+    $lim=7;
+    foreach($notes as $task){
+        if($i<$lim){
+            $return.='<li><a href="/node/'.$task->nid.'">'.$task->title.'</a></li>';
+            $i++;
+        }
+    }
+    $return.='</ul>';
+
+
+
+    $return.="<h3>Astrological<span>Astronomical</span></h3>\n";
+    $return.="<div class=\"now_attribute\" id=\"sola-luna\">\n";
+
+
+    $return.=organic_astro_dashboard_widget();
+
+
+    $return.="</div>\n";
+
+    $return.="<div class=\"now_attribute\">\n";
+    $return.=organic_astro_date();
+    $return.="</div>\n";
+
+
+    $return.='</div><!--end #c1-->'."\n";
+
+    $return.="</div><!--end #dashboard-->\n";
+
+
+    return $return;
+
+
+}#./organic_planner_dashboard()
+
+
+
+
+
+
+
+
+function romanNumerals($num){
+	$n=intval($num);
+	$res='';
+	$roman_numerals=array(
+                'M' =>1000,
+                'CM'=>900,
+                'D' =>500,
+                'CD'=>400,
+                'C' =>100,
+                'XC'=>90,
+                'L' =>50,
+                'XL'=>40,
+                'X' =>10,
+                'IX'=>9,
+                'V' =>5,
+                'IV'=>4,
+                'I' =>1);
+
+	foreach($roman_numerals as $roman=>$number){
+		/*** divide to get  matches ***/
+		$matches=intval($n / $number);
+ 
+		/*** assign the roman char * $matches ***/
+		$res.=str_repeat($roman, $matches);
+ 
+		/*** substract from the number ***/
+		$n=$n % $number;
+	}
+	return $res;
+}
+
+
+
+
+function date_comparison($a,$b){
+    return $b->changed - $a->changed;
+}
+
+function weight_comparison($a,$b){
+    if(empty($a->field_weight)) $a->field_weight[LANGUAGE_NONE][0]['value']=0;
+    if(empty($b->field_weight)) $b->field_weight[LANGUAGE_NONE][0]['value']=0;
+    return $b->field_weight[LANGUAGE_NONE][0]['value'] - $a->field_weight[LANGUAGE_NONE][0]['value'];
+}
+
+
+
+
+
+function organic_planner_checklist(){
+
+
+    #$tasks=organic_context_obtain_entities_by_type(
+    #    variable_get('organic_connectivity_task_prototype','')
+    #);
+    $tasks=organic_prototype_obtain_entities_by_connection(
+        variable_get('organic_connectivity_task_prototype',''),
+        'prototypical',
+        TRUE
+    );
+
+
+    if(isset($_GET['order-by'])) $return.='ORDER BY:'.$_GET['order-by'];
+
+    usort($tasks,'weight_comparison');
+
+
+    #$return .='<pre>'.print_r($tasks,TRUE).'</pre>\n';
+
+    $return='<section id="tasks">';
+    $return.='<table>';
+    $return.='    <thead>';
+    $return.='        <tr>';
+    $return.='            <th><a href="?order-by=title">Title</a></th>';
+    $return.='            <th><a href="?order-by=weight">Importance</a></th>';
+    $return.="            <th><a href=\"?order-by=project\">Project</a></th>\n";
+    $return.="            <th><a href=\"?order-by=date\">Date</a></th>\n";
+    $return.="            <th><!--Edit--></th>\n";
+    $return.="        </tr>\n";
+    $return.="    </thead>\n";
+    $return.="    <tbody>\n";
+
+	for($i=0; $i<count($tasks); $i++){
+    	if( $i%2 == 0) $return.="<tr class=\"even\" title=\"".$tasks[$i]->nid."\">\n";
+    	else $return.="<tr class=\"odd\" title=\"".$tasks[$i]->nid."\">\n";
+
+    	$return.="<td class=\"title\">";
+        $return.="<a href=\"/".drupal_get_path_alias("node/".$tasks[$i]->nid)."\">\n";
+        $return.=$tasks[$i]->title;
+        $return.="</a>\n";
+        $return.="</td>\n";
+
+    	$return.="<td class=\"weight\">\n";
+    	if(!empty($tasks[$i]->field_weight)) $return.=$tasks[$i]->field_weight[LANGUAGE_NONE][0]['value'];
+    	$return.="</td>\n";
+
+    	$return.="<td class=\"project\">\n";
+    	$return.=organic_planner_show_associated_project($tasks[$i]);//.print_r($tasks[$i],TRUE);
+    	$return.="</td>\n";
+
+    	$return.="<td class=\"date\">\n";
+    	$return.=date("Y-m-d",$tasks[$i]->created);
+    	$return.="</td>\n";
+
+    	$return.="<td class=\"edit\">";
+    	$return.="<a href=\"/node/".$tasks[$i]->nid."/edit\">(edit)</a>\n";
+    	$return.="</td>\n";
+
+    	$return.="</tr>\n";
+    }
+    $return.="    </tbody>\n";
+    $return.="</table>\n";
+    $return.="</section>\n\n";
+    return $return;
+}
+
+
+
+
+
+
+function organic_planner_show_associated_project($node){
+
+    if(!empty($node->field_context)){
+
+        if(empty($node->connections)){
+            $node->connections=organic_prototype_extract_connections($node->field_context,NULL);
+        }
+
+        $return="";
+        foreach($node->connections as $item_context){
+
+            $item_context['content']=node_load($item_context['nid']);
+
+            if(!empty($item_context['content']->field_context)){
+
+                if(empty($item_context['content']->connections)){
+                    $item_context['content']->connections=organic_prototype_extract_connections($item_context['content']->field_context,NULL);
+                }
+
+                //Check if project
+                $SHOW_NODE=FALSE;
+                foreach($item_context['content']->connections as $subC){
+                    if($subC['nid']==variable_get('organic_connectivity_project_prototype','')){
+                        $SHOW_NODE=TRUE;
+                    }
+                }
+
+                if($SHOW_NODE){
+                    $return.='<a href="/'.drupal_get_path_alias('node/'.$item_context['content']->nid).'">';
+                    if(!empty($item_context['content']->field_images))
+                        $return.="<img src=\"".image_style_url('thumbnail',$item_context['content']->field_images[LANGUAGE_NONE][0]["uri"])."\" alt=\"Associated Project Thumbnail\"/>\n";
+                    $return.=$item_context['content']->title.' ';
+                    $return.='</a>';
+                }
+
+            }
+
+        }
+        return $return;
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+function organic_planner_task_editor(){
+    if(is_numeric(arg(1))){
+        $nd=node_load(arg(1));
+        if($_SERVER['REQUEST_METHOD']=='GET'){
+            $return='<form action="/taskedit/'.arg(1).'" method="POST">';
+            $return.='<input type="text" id="newtitle'.$nd->nid.'" name="newtitle'.$nd->nid.'" value="'.htmlentities($nd->title).'"/>';
+            $return.='<input type="submit" value="Save"/>';
+            $return.='</form>';
+            return $return;
+        }
+        elseif($_SERVER['REQUEST_METHOD']=='POST'){
+            $nd->title=$_POST['newtitle'.arg(1)];
+            node_save( $nd );
+            return '<a href="/node/'.arg(1).'">'.$nd->title.'</a>';
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_planner_notes(){
+
+    $notes=organic_prototype_obtain_entities_by_connection(
+        variable_get('organic_connectivity_note_prototype',''),
+        'prototypical',
+        TRUE
+    );
+
+    $return='<section id="notes">';
+    $return.='<ul>';
+    foreach($notes as $note){
+        $return.='<li>';
+        $return.="<a href=\"/node/".$note->nid."\">\n";
+        $return.="<span class=\"title\">".$note->title."</span>\n";
+
+        if(!empty($note->body[LANGUAGE_NONE])){
+            $body=strip_tags($note->body[LANGUAGE_NONE][0]['value']);
+            $body=substr($body,0,555);
+            $return.="<span class=\"body\">".$body."</span>\n";
+        }
+
+        $return.="<span class=\"details\">";
+        $return.='<span class="project"><strong>Project:</strong>'.organic_planner_show_associated_project($note).'</span>';
+        $return.="</span>\n";
+        $return.="</a>\n";
+        $return.="</li>\n";
+    }
+    $return.='</ul>';
+
+    return $return;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_planner_weight(){
+    $node=node_load(arg(1));
+    if(!empty($node->field_weight)){
+        $return="<div class=\"weight\">\n";
+        $return.="<strong>Importance:</strong>\n";
+        $return.=$node->field_weight[LANGUAGE_NONE][0]['value'];
+        $return.="</div>\n\n";
+        return $return;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_planner_activities_days(){
+
+    $return='<section title="Daily Activities">';
+
+    #next line should go in 'lib/general.php'
+    $dayNames=array("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday");
+
+    if(file_exists($_SERVER['DOCUMENT_ROOT'].'/sites/planner.orgnsm.org/files/focii-repeat.xml')){
+
+        $focii_data=new DOMDocument();
+        if(!$focii_data->load($_SERVER['DOCUMENT_ROOT'].'/sites/planner.orgnsm.org/files/focii-repeat.xml')){
+            $return.='<p>Could not open focii file.</p>';
+            exit;
+        }
+        # Put focii into an array:
+        $focii_data=$focii_data->getElementsByTagName("focii")->item(0);
+        foreach($focii_data->childNodes as $focus){
+        	if($focus->nodeType == 1 && $focus->nodeName == "focus"){
+        		$focii[$focus->getAttribute("id")]["title"]=$focus->getAttribute("title");
+        		$ideas_data=NULL;
+        		if($ideas=$focus->getElementsByTagName("repeating-ideas")->item(0)){
+        			foreach($ideas->childNodes as $idea){
+        				if($idea->nodeType == 1 && $idea->nodeName == "idea"){
+        					$ideas_data[]=$idea->textContent;
+        				}
+        			}
+        			$focii[$focus->getAttribute("id")]["ideas"]=$ideas_data;
+        		}
+        	}
+        }
+        #$return.="<div><pre>FOCII: ".print_r($focii,TRUE)."</pre></div>";
+
+        # Get planner data w/focii selections and date-specific tasks into an array:
+        if(file_exists($_SERVER['DOCUMENT_ROOT'].'/sites/planner.orgnsm.org/files/focii-now.xml')){
+        	$planner_data=new DOMDocument();
+        	if(!$planner_data->load($_SERVER['DOCUMENT_ROOT'].'/sites/planner.orgnsm.org/files/focii-now.xml')){
+        		echo("	<p>Could not open index file.</p>\n\n");
+        		exit;
+        	}
+            $planner_data=$planner_data->getElementsByTagName("planner")->item(0);
+            foreach($planner_data->childNodes as $day){
+            	if($day->nodeType == 1 && $day->nodeName == "day"){
+            		foreach($day->childNodes as $focus){
+            			if($focus->nodeType == 1 && $focus->nodeName == "focus"){
+            				if($dateSpecificTasks_data=$focus->getElementsByTagName("date-specific-tasks")->item(0)){
+            					$tasks=NULL;
+            					foreach($dateSpecificTasks_data->childNodes as $task){
+            						if($task->nodeType == 1 && $task->nodeName == "task"){
+            							$tasks[]=$task->textContent;
+            						}
+            					}
+            					$days[$day->getAttribute("date")][$focus->getAttribute("select")]=$tasks;
+            				}
+            			}
+            		}
+            	}
+            }
+            #$return.="<div><pre>DAYS: ".print_r($days,TRUE)."</pre></div>";
+        }
+    }
+
+	# Run down planner data printing days (matching focii):
+	foreach($days AS $date=>$value){
+		if($date == date("Y-m-d")){
+			$return.=" <div class=\"planner-day active\">\n";
+			$return.="  <div class=\"today\">Today</div>\n";
+		} else {
+			$return.=" <div class=\"planner-day\">";
+		}
+		$time=mktime(0, 0, 0, substr($date,5,2), substr($date,8,2), substr($date,0,4));
+		$return.="<div class=\"day\">".date("l", $time)." <div class=\"date\">".$date."</div></div>";
+		foreach($days[$date] AS $focusID=>$dateSpcificTasks){
+			$return.="<div class=\"focal_description\">".$focii[$focusID]["title"]."</div>";
+			$return.="<div class=\"list_title\">This Week</div>";
+			$return.="<ul>";
+			foreach($dateSpcificTasks AS $position=>$task){
+				$return.="<li>".$task."</li>";
+				#$return.="<li class=\"imperative\">".$task."</li>";
+			}
+			$return.="</ul>";
+			$return.="<div class=\"list_title\"><a href=\"#\" onclick=\"document.getElementById('pri_".$date."').style.display='block';return false;\">&raquo;</a> Repeating Ideas</div>";
+			$return.="  <ul id=\"pri_".$date."\">";
+			foreach($focii[$focusID]["ideas"] AS $position=>$idea){
+				$return.="<li>".$idea."</li>";
+				#$return.="<li class=\"imperative\">".$idea."</li>";
+			}
+			$return.="</ul>";
+		}
+		$return.="<a href=\"/planner/edit/".$date."\" class=\"edit_link\">Edit</a>";
+		$return.="<a href=\"/planner/delete/".$date."\" class=\"delete_link\">Delete</a>";
+		$return.="</div>";
+	}
+	$return.="<div style=\"font-size:13px; font-weight:bold; width:150px; float:right; margin:20px; padding:5px;\"><a href=\"/focii/edit\" class=\"edit_link\">Edit Whole</a></div>";
+	$return.="<div style=\"font-size:13px; font-weight:bold; width:150px; float:right; margin:20px; padding:5px;\"><a href=\"/focii/add\" class=\"add_link\">Add New Day</a></div>";
+
+    $return.='</section>';
+
+
+    return $return;
+
+
+    #needs added support for add and delete options......
+    if($_SERVER["REQUEST_METHOD"] == "POST"){
+    	$return.="<div>POSTED...</div>";
+    }
+    elseif($_SERVER['REQUEST_METHOD']=="/focii/edit"){
+        if(isset($reqParam[1])){
+            echo("<div>SHOW " . $reqParam[1] . " EDIT UI</div>");
+            echo("<div class=\"note\">Note: this will be called and dumped inside the element (not linked to this other page) when the planner module becomes ajax active.</div>");
+    	}
+    	else display_db_edit($parameters["data"]);
+    	planner_display_focii($focii);
+    }
+
+}
+
+function organic_planner_display_db_edit(){
+    $return="<form action=\"/focii/edit\" method=\"POST\">\n";
+    $return.="	<div><textarea rows=\"26\" cols=\"70\">\n";
+    $database='/homepages/21/d93015512/htdocs/drupal/sites/planner.orgnsm.org/files/focii-now.xml';
+    $lines=file($database);
+    foreach($lines as $line_num=>$line){
+        $return.=htmlspecialchars($line);
+    }
+    $return.="	</textarea></div>\n\n";
+    $return.="	<div><input value=\"Send Changes\" type=\"submit\"/></div>\n\n";
+    $return.="</form>\n\n";
+    return $return;
+}
+
+function organic_planner_display_focii($focii){
+	echo("<h3>Available Focii</h3>\n");
+	foreach($focii as $focus=>$details){
+		echo("<div style=\"border:1px solid #444; float:left; padding:5px; margin:5px;\">" . $focus . "</div>\n");
+	}
+}
+
+
+?>

@@ -1,0 +1,301 @@
+<?php
+
+$GLOBALS['qabalah_spheres']=array();
+$GLOBALS['qabalah_paths']=array();
+
+
+
+function organic_qabalah_menu(){
+
+    return array(
+        'contexts/tree-of-life'=>array(
+            'title'=>'Tree of Life',
+            'description'=>'Context Mapping on Qabalistic Geometry',
+            'page callback'=>'theme',
+            'page arguments'=>array('tree_of_life',array('image_style'=>'small_list_icon')),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+    );
+
+}
+
+
+
+
+function organic_qabalah_theme(){
+
+    return array(
+        'tree_of_life'=>array(
+            'template'=>'tree_of_life',
+            'path'=>drupal_get_path('module','organic_qabalah').'/lib',
+            'variables'=>array(
+                'sephiroth_prototype'=>1,                    ///The prototype for all sephiroth is the first sephiroth, kether
+                'path_prototype'=>11,                    ///The prototype for all paths is the first path, aleph
+                'image_style'=>'thumbnail',
+                'show_displays'=>TRUE,
+            ),
+        ),
+    );
+
+}
+
+
+
+
+function organic_qabalah_user_access(){
+    global $user;
+    if(in_array('authenticated user',$user->roles)) return TRUE;
+    return FALSE;
+}
+
+
+
+
+///////////// Add dimensional sphere and path prototype options to the OrganicConnectivity config form /////////////
+
+function organic_qabalah_form_organic_prototype_config_page_alter(&$form,&$form_state,$form_id){
+
+    $form['organic_connectivity_dimensional_prototype'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Define prototype for dimensional spheres'),
+        '#default_value' => variable_get('organic_connectivity_dimensional_prototype',''),
+        '#description' => t('Define prototype for dimensional spheres'),
+        '#required' => FALSE,
+    );
+
+    $form['organic_connectivity_path_prototype'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Define prototype for dimensional paths'),
+        '#default_value' => variable_get('organic_connectivity_path_prototype',''),
+        '#description' => t('Define prototype for dimensional paths'),
+        '#required' => FALSE,
+    );
+
+    return $form;
+
+}
+
+
+
+
+
+function organic_qabalah_preprocess(&$variables,$hook){
+
+    global $qabalah_spheres;
+    global $qabalah_paths;
+
+    if($hook=='tree_of_life'&&empty($qabalah_spheres)){
+
+        $qabalah_spheres=organic_prototype_obtain_entities_by_connection(
+            variable_get('organic_connectivity_dimensional_prototype',''),
+            'prototypical',
+            TRUE
+        );
+        #print_r($qabalah_spheres);
+
+        $qabalah_paths=organic_prototype_obtain_entities_by_connection(
+            variable_get('organic_connectivity_path_prototype',''),
+            'prototypical',
+            TRUE
+        );
+        #print_r($qabalah_paths);
+
+    }
+
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+//////////////// A special overview page geared toward QABALAH ///////////////////
+
+function organic_qabalah_display_sephiroth_list(){
+
+    $return = "<div id=\"spheres-paths\">\n";
+    $return .= "<div id=\"spheres\">\n";
+    $return .= "<h3>(Numerical) Spheres</h3>\n";
+
+
+    $return .= "<ul class=\"child_grid\">\n";
+    #$return .= "<pre>".print_r($spheres,TRUE)."</pre>\n";
+    foreach( $spheres as $sphere ){
+        $return .= "<li class=\"sphere-".$sphere->nid."\">\n";
+        $return .= "<a href=\"/".drupal_get_path_alias("node/".$sphere->nid)."\">\n";
+        $return .= "<span class=\"number\">".$sphere->nid."</span>\n";
+        $return .= "<span class=\"title\">".$sphere->title."</span>\n";
+
+        //if( !empty($sphere->field_traditional) )
+            //$return .= "<span class=\"subtitle\">".$nd->field_traditional["und"][0]["value"]."</span>\n";
+
+        //if( !empty($sphere->field_color) )
+            //$return .= "<span class=\"kala\">Color: ".$nd->field_color["und"][0]["value"]."</span>\n";
+
+        //if( !empty($sphere->field_astro) ){
+            //$return .= "<span class=\"astro\"><span style=\"color:#ddd;\">Astro:</span> \n";
+            //foreach( $nd->field_astro["und"] as $astro ){
+                //$astrobodydetails = node_load( $astro["nid"] );
+                //$return .= "<span class=\"context\">".$astrobodydetails->title."</span>\n";
+            //}
+            //$return .= "</span>\n";
+        //}
+
+        //if( isset($sphere->field_images) ){
+            //$tree = explode( "/", $nd->field_images[0]["filepath"] );
+            //$return .="<img src=\"/sites/default/files/imagecache/project_intro/".$tree[count($tree)-2]."/".$tree[count($tree)-1]."\" alt=\"\"/>\n";
+        //}
+
+        $return .= "</a>\n";
+        if( !empty($sphere->field_path) ){
+            $return .= "<span class=\"connections\">Paths: <ul>\n";
+            foreach( $sphere->field_path["und"] as $path ){
+                $deetz = node_load( $path["nid"] );
+                $return .= "<li><a href=\"/node/".$path["nid"]."\">".$deetz->title."</a></li>\n";
+            }
+            $return .= "</ul></span>\n";
+        }
+        $return .= "</li>\n";
+	}
+	$return .= "</ul>\n";
+	$return .= "</div>\n";
+
+
+
+	$return .= "<div id=\"paths\">\n";
+	$return .= "<h3>(Archetypal) Paths</h3>\n";
+
+
+	$return .= "<ul class=\"child_grid\">\n";
+	foreach( $paths as $path ){
+
+        $return .= "<li class=\"path-".$path->nid."\">\n";
+        $return .= "<a href=\"/".drupal_get_path_alias("node/".$path->nid)."\">\n";
+
+			//$return .= "<span class=\"number\">".$path->nid."</span>\n";
+			$return .= "<span class=\"title\">".$path->title."</span>\n";
+
+			//if( !empty($path->field_english) )
+				//$return .= "<span class=\"subtitle\">".$path->field_english["und"][0]["value"]."</span>\n";
+
+			if( !empty($path->field_tarot_trump) )
+				$return .= "<span class=\"tarot\"><span style=\"color:#ccc;\">Tarot:</span> ".$path->field_tarot_trump["und"][0]["value"]."</span>\n";
+
+			if( !empty($path->field_enochian_aire) )
+				$return .= "<span class=\"aire\"><span style=\"color:#ccc;\">Enochian Aire:</span> ".$path->field_enochian_aire["und"][0]["value"]."</span>\n";
+
+			if( !empty($path->field_astro) ){
+				$return .= "<span class=\"astro\"><span style=\"color:#ddd;\">Astro:</span> \n";
+				foreach( $path->field_astro["und"] as $astro ){
+					$astrobodydetails = node_load( $astro["nid"] );
+//print_r($astrobodydetails);
+if( !empty($astrobodydetails->field_english["und"][0]["value"]) )
+	$return .= "<span class=\"context\">".$astrobodydetails->title." (".$astrobodydetails->field_english["und"][0]["value"].")</span>\n";
+else $return .= "<span class=\"context\">".$astrobodydetails->title."</span>\n";
+				}
+				$return .= "</span>\n";
+			}
+
+			//if( isset($path->field_images) ){
+				//$tree = explode( "/", $nd->field_images[0]["filepath"] );
+				//$return .="<img src=\"/sites/default/files/imagecache/project_intro/".$tree[count($tree)-2]."/".$tree[count($tree)-1]."\" alt=\"\"/>\n";
+			//}
+
+        $return .= "</a>\n";
+        $return .= "</li>\n";
+    }
+    $return .= "</ul>\n";
+
+    $return .= "</div>\n";
+    $return .= "</div>\n";
+    return $return;
+}
+
+
+
+
+
+
+
+
+
+
+
+function organic_qabalah_display_formulae(){
+
+    $formulae = obtain_entities_by_type( "node", "map" );
+    usort($formulae, function($a, $b){ return strcmp($a->title, $b->title); });
+
+    $return = "<ul id=\"formulae\">\n";
+    foreach( $formulae as $map ){
+        $return .= "<li>\n";
+        $return .= "<a href=\"/".drupal_get_path_alias("node/".$map->nid)."\">\n";
+
+    			if( !empty($map->field_imagery[LANGUAGE_NONE]) )
+                    $return .= "<img src=\"".image_style_url("medium", $map->field_imagery[LANGUAGE_NONE][0]["uri"] )."\" alt=\"Formulae Icon\"/>\n";
+
+    			$return .= "<span class=\"title\">".$map->title."</span>\n";
+
+    			if( !empty($map->field_english) )
+    				$return .= "<span class=\"subtitle\">".$map->field_english["und"][0]["value"]."</span>\n";
+
+    			if( !empty($map->field_sephiroth) ){
+    				$return .= "<span class=\"sephiroth\">Sephiroth: \n";
+    				foreach( $map->field_sephiroth["und"] as $sephiroth ){
+    					$sephirothdetails = node_load( $sephiroth["nid"] );
+    					$return .= "<span class=\"context\">".$sephirothdetails->title."</span>\n";
+    				}
+    				$return .= "</span>\n";
+    			}
+
+    			$return .= "<span class=\"number\">(".$map->nid.")</span>\n";
+
+    		$return .= "</a>\n";
+    	$return .= "</li>\n";
+    }
+    $return .= "</ul>\n";
+    return $return;
+}
+
+
+
+
+
+
+
+
+
+
+function organic_qabalah_numeric_list(){
+
+    $sql_children = "SELECT node.nid AS nid,
+       node.vid AS node_vid,
+       node.title AS node_title
+     FROM node node";
+
+    $db_query_children = db_query( $sql_children );
+
+    echo( "<ul>\n" );
+
+    foreach( $db_query_children as $row ){
+    	$nd = node_load( $row->nid );
+    	echo( "<li style=\"display:inline;font-size:250%;padding:.5em;\">\n" );
+    	if( isset($nd->path) ) echo( "<a href=\"/".$nd->path."\">\n");
+    	else echo( "<a href=\"/node/".$row->nid."\">\n");
+    	echo( "<span class=\"number\">".$row->nid."</span>\n" );
+    	echo( "</a>\n" );
+    	echo( "</li>\n" );
+    }
+
+    echo( "</ul>\n\n" );
+
+}
+
+
+?>

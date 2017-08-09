@@ -1,0 +1,5 @@
+name = Organic Astro
+description = Astronomoical and astrological functions
+package = Organic Connectivity
+core = 7.x
+files[] = organic_astro.module;

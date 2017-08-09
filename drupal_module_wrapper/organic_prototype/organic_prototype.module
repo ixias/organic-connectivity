@@ -1,0 +1,971 @@
+<?php
+
+function organic_prototype_menu(){
+    return array(
+        'items'=>array(
+            'title'=>'Items',
+            'description'=>'...',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'blocks',
+                    'ordering'=>'created',
+                    'show_contexts'=>1,
+                )
+            ),
+            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'items/blocks'=>array(
+            'title'=>'Blocks',
+            'description'=>'A sortable and display-morphable list of items',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'blocks',
+                    'ordering'=>'created',
+                    'show_contexts'=>1,
+                )
+            ),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+        ),
+        'items/rotator'=>array(
+            'title'=>'Cinema',
+            'description'=>'A listing of items suitable for rotation',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'cinema',
+                    'by_context'=>NULL,
+                    'by_type'=>NULL,
+                    'ordering'=>'created',
+                    'show_contexts'=>0,//0=no,1=yes,2=only
+                    'show_unpublished'=>0,//0=no,1=yes,2=only
+                    'perpage'=>30,
+                    'show_pagination'=>TRUE,
+                    'cinema_size'=>'large-landscape-or-portrait',
+                    'cinema_size_thumb'=>'thumbnail',
+                )
+            ),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+        ),
+        'items/global'=>array(
+            'title'=>'Worldmap',
+            'description'=>'A listing of items suitable for global mapping',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'mapped',
+                    'by_context'=>NULL,
+                    'ordering'=>'created',
+                    'show_contexts'=>0,//0=no,1=yes,2=only
+                    'perpage'=>50,
+                    'show_pagination'=>TRUE,
+                    'show_toolbar'=>TRUE,
+                    'image_size'=>'large-landscape-or-portrait',
+                    'image_size_sub'=>'thumbnail',
+                )
+            ),
+            'access callback' => 'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/table'=>array(
+            'title'=>'Table',
+            'description'=>'Tabular nodal data',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'tabular',
+                    'perpage'=>150,
+                    'show_contexts'=>1,//0=no,1=yes,2=only
+                    'show_outer_contexts'=>FALSE,
+            )),
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'items/full_nodes'=>array(
+            'title'=>'Nodes',
+            'description'=>'A listing of items via Drupal\'s default content node template(?)',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'nodes',
+                    'perpage'=>20,
+            )),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+        ),
+        'items/sort-by'=>array(
+            'title'=>'Sorting',
+            'description'=>'Item sorting options',
+            'page callback'=>'organic_gallery_sorting',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
+        ),
+        'items/sort-by/weight'=>array(
+            'title'=>'Featured',
+            'description'=>'A list of most weighted items via blocks',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'blocks',
+                    'ordering'=>'weight',
+                    'perpage'=>100,
+                    'show_contexts'=>1,
+                    'show_pagination'=>TRUE,
+                    'show_toolbar'=>TRUE,
+                )
+            ),
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+        ),
+        'items/sort-by/random'=>array(
+            'title'=>'Random',
+            'description' => 'A list of random items via blocks',
+            'page callback' => 'theme',
+            'page arguments' => array(
+                'items',array(
+                    'viewer'=>'blocks',
+                    'ordering'=>'rand',
+                    'perpage'=>25,
+                    'show_multi_image'=>FALSE,
+                    'show_children'=>FALSE,
+                    'show_pagination'=>FALSE,
+                    'show_toolbar'=>FALSE,
+                )
+            ),
+            'access callback' => 'organic_prototype_check_item_access',
+            'menu_name' => 'main-menu',
+        ),
+        'items/sort-by/unpublished'=>array(
+            'title'=>'Unpublished',
+            'description'=>'Nodes with status set to zero',
+            'page callback'=>'theme',
+            'page arguments'=>array(
+                'items',array(
+                    'viewer'=>'tabular',
+                    'show_unpublished'=>2,
+                    'show_pagination'=>TRUE,
+                )
+            ),
+            'access callback'=>'organic_prototype_super_user_access',
+            'menu_name'=>'main-menu',
+        ),
+        'syndicate'=>array(
+            'title'=>'Syndicate',
+            'description'=>'An RSS feed of recent content items',
+            'page callback'=>'theme',
+            'page arguments'=>array('syndication'),
+            'delivery callback'=>'organic_prototype_output_plain',
+            'access callback'=>'organic_prototype_check_item_access',
+            'menu_name'=>'main-menu',
+        ),
+    );
+}
+
+function organic_prototype_output_plain($data_from_theme_template){
+    //header("Content-Type:text/xml");
+    drupal_add_http_header("Content-Type","text/xml");
+    drupal_add_http_header("Charset","utf-8");
+    echo($data_from_theme_template);
+}
+function organic_prototype_check_item_access(){
+    if($restricted_to=variable_get('organic_context_items_restrict_to_users','')){
+        $restricted_to=explode(',',$restricted_to);
+        global $user;
+        if(isset($user->name)&&in_array($user->name,$restricted_to)) return TRUE;
+        if(isset($user->name)&&in_array('[creator]',$restricted_to)) return TRUE;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+function organic_prototype_theme(){
+    return array(
+        'items'=>array(
+            'template'=>'items',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'viewer'=>'blocks',
+                'by_type'=>NULL,
+                'by_context'=>NULL,
+                'by_attribute'=>NULL,
+                'perpage'=>50,
+                'show_multi_image'=>TRUE,
+                'image_size'=>'medium',
+                'image_size_sub'=>'thumbnail',
+                'cinema_size'=>'large-landscape-or-portrait',
+                'cinema_size_thumb'=>'thumbnail',
+                'ordering'=>'created',
+                'show_pagination'=>TRUE,
+                'show_toolbar'=>TRUE,
+                'show_contexts'=>0,//0=no,1=yes,2=only
+                'show_unpublished'=>0,//0=no,1=yes,2=only
+                'show_outer_contexts'=>TRUE,
+                'show_random_child'=>FALSE,
+                'show_children'=>FALSE,
+                'break_by_contexts'=>FALSE,
+                'show_date'=>'Y',
+                'show_heading'=>TRUE,
+            ),
+        ),
+        'syndication'=>array(
+            'template'=>'syndicate',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables'=>array(
+                'by_context'=>NULL,
+                'perpage'=>25,
+                'ordering'=>'created',
+                'image_size'=>'medium',
+                'show_contexts'=>0,//0=no,1=yes,2=only
+                'show_unpublished'=>0,//0=no,1=yes,2=only
+            ),
+        ),
+        'prototypes'=>array(
+            'template'=>'prototypes',
+            'variables'=>array(
+                'image_style'=>'thumbnail',
+                'mine_children'=>TRUE,
+                'show_random_child'=>TRUE,
+                'show_nid'=>TRUE,
+                'type'=>variable_get('organic_connectivity_prototype_prototype',''),
+                'parent'=>variable_get('organic_connectivity_prototype_prototype',''),
+            ),
+        ),
+        'pagination'=>array(
+            'template'=>'pagination',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables' => array(
+                'item_count'=>NULL,
+                'page'=>NULL,
+                'perpage'=>NULL,
+            ),
+        ),
+        'items_toolbar'=>array(
+            'template'=>'items_toolbar',
+            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'variables' => array(
+                'item_count'=>NULL,
+                'page'=>NULL,
+                'perpage'=>NULL,
+            ),
+        ),
+    );
+}
+
+function organic_prototype_super_user_access(){
+    global $user;
+    if($user->uid=='1') return TRUE;
+    return FALSE;
+}
+
+function organic_prototype_preprocess(&$variables,$hook){
+
+    if($hook=='itemlist_outer_prototypes_needs_you'||
+       $hook=='heading_title'||
+       $hook=='prototypes'||
+       $hook=='json_contexts'||
+       $hook=='attributes_of_node'||
+       $hook=='node'){
+
+
+        #echo('hi '.$hook);
+
+
+        global $nd;
+        if(empty($nd)&&arg(0)=='node'&&is_numeric(arg(1))){
+            #echo("You have loaded node via: ".$hook.' hook<br/>');
+            $nd=node_load(arg(1));
+            $nd->connections=organic_connectivity_extract_connections($nd->field_context,NULL);
+        }
+
+        global $types;
+        global $types_total_uses;
+
+
+        /// Get children recursively based on prototype prototype (class) nid [set on configuration page]
+
+        if(empty($types)){
+
+            #echo("types is empty and you're running:".$hook);
+
+            $types=organic_prototype_obtain_entities_by_connection(
+                variable_get('organic_connectivity_prototype_prototype',''),
+                'prototypical',
+                TRUE
+            );
+            #echo('<pre>'.print_r($types,TRUE).'</pre>');
+
+            if(count($types)){
+                foreach($types as $tid=>$type){
+                    // Check to see if anything has already loaded the connections
+                    if(!empty($types[$tid]->field_context[LANGUAGE_NONE])){
+                        // Otherwise load connection data
+                        $types[$tid]->connections=organic_connectivity_extract_connections($type->field_context);
+                    }
+                }
+
+
+                foreach($types as $tid=>$type){
+
+                    if(!empty($type->connections)){
+
+                        // Count uses
+                        $types[$tid]->typeUses='666';
+                        $types[$tid]->typeUses=organic_prototype_obtain_entities_by_connection($type->nid,'prototypical',FALSE);
+        #                $types_total_uses+=count($types[$tid]->typeUses);
+        #                echo($type->nid.' : '.count($types[$tid]->typeUses).'<br/>');
+                        //$types[$tid]->uses = organic_context_obtain_entities_by_type($context->nid);
+                        //$types[$tid]->uses = organic_prototype_obtain_entities_by_connection($context->nid,'prototypical',FALSE);
+
+                        foreach($type->connections as $attribute){
+                            /// The checkings for TYPE connectivity
+                            if($attribute['type']==variable_get('organic_connectivity_prototype_prototype','')){
+                                #echo('CONNECTED!');
+                                #if(!isset($types[$cid])) echo('<br/>parent:'.$cid.' not set ~ via child '.$tid);
+                                #if(!isset($types[$cid]->typeChildren))
+                                #    $types[$cid]->typeChildren=array();
+                                $types[$attribute['nid']]->typeChildren[$tid]=$tid;
+                            }
+                            #echo("<br/>\n");
+                        }
+
+                    }
+
+                }
+
+                #echo('<pre>'.print_r($types,TRUE).'</pre>');
+            }
+
+
+        }
+
+    }
+
+    if($hook=='items'||$hook=='syndication'){
+
+
+        if(isset($_GET['viewer'])) $variables['viewer']=$_GET['viewer'];
+
+
+        if(isset($variables['show_outer_contexts'])){
+            organic_prototype_preprocess($variables,'itemlist_outer_prototypes_needs_you');
+            organic_connectivity_preprocess($variables,'organic_prototype_needs_you');
+        }
+
+        //if(isset($variables['show_outer_contexts_notes'])){
+            organic_connectivity_preprocess($variables,'organic_prototype_needs_you');
+        //}
+
+
+        if(arg(2)=='boards') organic_connectivity_preprocess($variables,'organic_prototype_needs_you');
+
+
+        if(isset($variables['by_type'])){
+            $variables['childs']=organic_prototype_obtain_entities_by_connection($variables['by_type'],'prototypical',TRUE);
+            #echo('<pre>'.print_r($variables['childs']).'</pre>');
+        }
+        elseif(isset($variables['by_context'])){
+            $variables['childs']=organic_prototype_obtain_entities_by_connection($variables['by_context'],'contextual',TRUE);
+            #echo('<pre>'.$variables['by_context'].'~~~~'.print_r($variables['childs']).'</pre>');
+        }
+        elseif(isset($variables['by_attribute'])){
+            $variables['childs']=organic_prototype_obtain_entities_by_connection($variables['by_attribute'],'attributional',TRUE);
+            #echo('<pre>'.print_r($variables['childs']).'</pre>');
+        }
+        else{
+            $variables['childs']=organic_prototype_obtain_entities_by_connection(null,null,TRUE,$variables['show_unpublished']);
+        }
+
+
+        if(count($variables['childs'])){
+
+            global $subjects;
+
+            #echo('<br/>WE HAVE CHILDZ<br/>');print_r($variables['childs']);
+
+            foreach($variables['childs'] as $iid=>$item)
+                $variables['childs'][$iid]->connections=organic_connectivity_extract_connections($item->field_context);
+
+
+            /////////////////////////////////////// REMOVE EITHER subjects OR NON-subject ITEMS
+
+            if($variables['show_contexts']===0){
+
+
+                // Remove items exposed as context ((unless the connection weight is under 50))
+
+                foreach($variables['childs'] as $iid=>$child){
+
+                    # if it's a context...
+#                    if(!empty($variables['childs'][$iid]->connections)
+#                       &&array_key_exists(variable_get('organic_connectivity_context_prototype',''),$variables['childs'][$iid]->connections)){
+
+                        if(isset($variables['by_context'])){
+                            // CHECK RECURSIVELY TO SEE IF THEY'RE IN THE PAMPHLET TREE CHAIN
+                            if(in_pamphlet($variables['by_context'],$child)){
+                                unset($variables['childs'][$iid]);
+                                #echo "1 .just unset {$iid},".'<br/>';
+                            }
+                            #echo "<br/>----------------------------------------------------<br/><br/><br/><br/>";
+                        }
+                        elseif(isset($variables['by_type'])){
+                            // CHECK RECURSIVELY TO SEE IF THEY'RE IN THE PAMPHLET TREE CHAIN
+                            if(in_pamphlet($variables['by_type'],$child)){
+                                unset($variables['childs'][$iid]);
+                                #echo "2 .just unset {$iid},".'<br/>';
+                            }
+                            #echo "<br/>----------------------------------------------------<br/><br/><br/><br/>";
+                        }
+                        else{
+                            if(isset($subjects[$iid])){
+                                unset($variables['childs'][$iid]);
+                                #echo "3 .just unset {$iid},".'<br/>';
+                            }
+                        }
+
+#                    }
+                    #echo "<br/>----------------------<br/><br/><br/><br/><br/><br/><br/><br/>";
+
+
+                }
+
+            }
+            elseif($variables['show_contexts']===2){
+
+                // Remove items NOT exposed as context
+                #echo('organic_connectivity_context_prototype:'.variable_get('organic_connectivity_context_prototype',''));
+                foreach($variables['childs'] as $key=>$child){
+
+                    if(!empty($variables['childs'][$key]->connections)
+                       &&!array_key_exists($key,$subjects)){
+                        #echo('REMOVING:'.$key.'<br/>');
+                        unset($variables['childs'][$key]);
+                    }
+                    //else $variables['childs'][$key]->connections=organic_connectivity_extract_connections($child->field_context,NULL);
+                }
+
+            }
+
+
+            ///////////////////////////////////////////////////////// Run selected sorting procedure
+
+            if(isset($_GET['sort'])) $variables['ordering']=$_GET['sort'];
+
+            if($variables['ordering']=='created'){
+                // Order by creation date
+                usort($variables['childs'], function($a, $b){ return $b->created - $a->created; });
+            }
+            elseif($variables['ordering']=='weight'){
+                // Remove items that don't have a set weight
+                foreach($variables['childs'] as $nid=>$child) if(empty($child->field_weight)) unset($variables['childs'][$nid]);
+                // Order by weight
+                usort($variables['childs'], function($a,$b){ return $b->field_weight[LANGUAGE_NONE][0]['value'] - $a->field_weight[LANGUAGE_NONE][0]['value']; });
+            }
+            elseif($variables['ordering']=='rand'){
+                shuffle($variables['childs']);
+            }
+            elseif($variables['ordering']=='alpha'){
+                usort($variables['childs'], function($a, $b){ return $b->title - $a->title; });
+            }
+            elseif($variables['ordering']=='nid'){
+                //usort($variables['childs'], function($a, $b){ return $b->title - $a->title; });
+            }
+
+
+            //////////////////////////////////////////// BREAK ITEM LIST INTO CONTEXT GROUPS ///////////////////////////
+
+            $variables['items_context_breaks']=array();
+            if(isset($variables['break_by_contexts'])&&$variables['break_by_contexts']){
+                foreach($variables['childs'] as $iid=>$child){
+                    $variables['childs'][$iid]->connections=organic_connectivity_extract_connections($child->field_context);
+                    $got_added=FALSE;
+                    foreach($variables['childs'][$iid]->connections as $icont){
+                        if($icont['nid']!=$variables['by_context']){
+                            $variables['items_context_breaks'][$icont['nid']][]=$child->nid;
+                            $got_added=TRUE;
+                        }
+                    }
+                    if(!$got_added)$variables['items_context_breaks'][0][]=$child->nid; //Add to "Uncategorized"
+                }
+                #echo('<pre>'.print_r($variables['items_context_breaks'],TRUE).'</pre>');
+            }
+
+            ///////////////////////////////////////////////////////// CUT THE ITEM LIST VIA PAGINATION
+
+            //grab the total items before pruning the array
+            $variables['total_item_count']=count($variables['childs']);
+
+            //override $perpage if query string is set, otherwise use prior settings in theme config
+            if(isset($_GET['perpage'])) $variables['perpage']=$_GET['perpage'];
+
+            if(isset($_GET['page'])
+               &&round($_GET['page'])<=ceil($variables['total_item_count']/$variables['perpage'])
+               &&round($_GET['page'])>0){
+
+                $variables['page']=round($_GET['page']);
+            }
+            else $variables['page']=1;
+
+            // calc start and end item #'s
+            $startItem=(($variables['page']-1)*$variables['perpage']);
+            $endItem=$startItem+($variables['perpage']-1);
+            if($endItem>count($variables['childs'])) $endItem=count($variables['childs'])-1;
+
+            //////////////////CLIP BY START AND END ITEM////////////////////////
+            //$variables['childs']=array_slice($variables['childs'],$startItem,$endItem,true);
+            $i=0;
+            foreach($variables['childs'] as $iid=>$child){
+                if($i<$startItem||$i>$endItem) unset($variables['childs'][$iid]);
+                $i++;
+            }
+        }
+
+
+    }//endif($hook='items')
+
+}
+
+
+
+
+
+function search_for_attribute($attribute_type,$attribute,&$attributes){
+    foreach($attributes as $key=>$val)
+        if($val['type']==$attribute_type&&$val['nid']==$attribute)
+            return $key;
+    return false;
+}
+
+
+
+
+
+function in_pamphlet($context,$child){
+
+    global $subjects;
+
+    #echo('<h4>Checking: '.$subjects[$context]->title.', for:'.$child->title.'</h4>');
+
+    if(isset($subjects[$context]->children)){
+
+        if(in_array($child->nid,$subjects[$context]->children)){
+
+            #echo('<h5>FOUND IN ARRAY, searching'.variable_get('organic_connectivity_context_prototype','').', '.$child->nid.'....</h5>');
+
+            $key=search_for_attribute(
+                     variable_get('organic_connectivity_context_prototype',''),
+                     $context,
+                     $child->connections);
+
+            #echo('<h6>FOUND KEY: '.$key.' '.$child->title.' in '.$context.' via '.variable_get('organic_connectivity_context_prototype','').'<pre>'.print_r($child->connections,TRUE).'</pre></h6>');
+
+            if($child->connections[$key]['weight']>=50) return TRUE;
+
+        }
+        else {
+
+            #print_r($subjects[$context]->children);echo('<br/>');
+
+            foreach($subjects[$context]->children as $child_context){
+
+                #echo("<h3>Couldn't find ".$child->title." in this level (".$subjects[$context]->title."), about to dive into: ".$subjects[$child_context]->title."</h3>");
+
+                if(in_pamphlet($child_context,$child)) return TRUE;
+
+            }
+
+        }
+    }#else echo "no children<br/>";
+    return FALSE;
+
+}
+
+
+
+
+
+/*function organic_prototype_add_children_entities($query_nid,$filter=NULL){
+
+
+    echo('<div style="padding-left:25px;"><h2><a>You are getting children connected to:'.$query_nid.'</a></h2>');
+
+
+    /// Special Cases for other connectors (modules) to quickly grab their data as well ///
+
+    if($query_nid==variable_get('organic_connectivity_connection_prototype','')){
+        global $connectors;
+        $connectors=organic_prototype_add_children_entities($query_nid,'connector');
+        #return;
+    }
+    else*//*if($query_nid==variable_get('organic_connectivity_context_prototype','')&&$filter!='context'){
+        echo "<h3 style='color:green;'>trying to set subjects via:".$query_nid.'</h3><br/>';
+        global $subjects;
+        $subjects=organic_prototype_add_children_entities($query_nid,'context');
+        #return;
+    }
+    elseif($query_nid==variable_get('organic_connectivity_attribute_prototype','')&&$filter!='attribute'){
+        global $attributes;
+        echo "<h3 style='color:green;'>trying to set attributes via:".$query_nid.'</h3><br/>';
+        $attributes=organic_prototype_add_children_entities($query_nid,'attribute');
+        #return;
+    }
+
+    $kids=organic_prototype_obtain_entities_by_connection($query_nid);
+
+
+    if(!empty($kids)){
+
+
+        $kids_to_add=array();////need this so we aren't altering $types while looping through it
+        echo('<pre>');print_r(array_keys($kids));echo('</pre>');
+
+
+        foreach($kids as $kID=>$child){
+
+            echo('You are processing child:'.$kID.' of parent:'.$query_nid.'<br/>');
+
+            //$kids[$kID]['connections']=organic_connectivity_extract_connections($child->field_context);
+
+            if($filter=='type'){
+                ############if they have no weight and no note then add children to master types array
+                if($kids[$kID]['connections'][$query_nid]['weight']==0){
+                    echo('Kept:'.$kID.' bcs it\'s connected properly as TYPE<br/>');
+                    echo('RECURSION:'.$kID.'<br/>');
+                    $kids_to_add[$kID]=$child;
+                    if($kID!=variable_get('organic_connectivity_prototype_prototype','')&&$kID!=$query_nid){
+#                        $test=organic_prototype_add_children_entities($kID,$filter);
+                        if(!empty($kids_to_add)&&!empty($test))$kids_to_add=$kids_to_add+$test;
+                        elseif(!empty($test))$kids_to_add=$test;
+                    }
+                }else{
+                    echo('::Threw out:'.$kID.' bcs it\'s not connected like a TYPE needs to be::<br/>');
+                    #unset($kids[$kID]);
+                }
+            }
+            elseif($filter=='context'){
+                ############if they have weight and no note then add children to master subjects array
+                if(!isset($kids[$kID]['connections'][1])||$kids[$kID]['connections'][1]['weight']!=0){
+                    echo('Threw out:'.$kID.' bcs it\'s not connected like a CONTEXT needs to be<br/>');
+                    unset($kids[$kID]);
+                }else{
+                    echo('Kept:'.$kID.' bcs it\'s connected properly as CONTEXT<br/>');
+                    echo('RECURSION:'.$kID.'<br/>');
+                }
+                if($kID!=variable_get('organic_connectivity_context_prototype','')
+                     &&$kID!=variable_get('organic_connectivity_prototype_prototype','')){
+                    $test=organic_prototype_add_children_entities($kID,$filter);
+                    if(!empty($kids_to_add)&&!empty($test))$kids_to_add=$kids_to_add+$test;
+                    elseif(!empty($test))$kids_to_add=$test;
+                }
+            }
+            elseif($filter=='attribute'){
+                ############if they have no weight and a note then add children to master attributes array
+                if($kids[$kID]['connections'][1]['weight']!=0){
+                    echo('Threw out:'.$kID.' bcs it\'s not connected like an ATTRIBUTE needs to be<br/>');
+                    unset($kids[$kID]);
+                }else{
+                    echo('Kept:'.$kID.' bcs it\'s connected properly as ATTRIBUTE<br/>');
+                    echo('RECURSION:'.$kID.'<br/>');
+                }
+                if($kID!=variable_get('organic_connectivity_context_prototype','')
+                     &&$kID!=variable_get('organic_connectivity_prototype_prototype','')
+                     &&$kID!=variable_get('organic_connectivity_attribute_prototype','')){
+                    $test=organic_prototype_add_children_entities($kID,$filter);
+                    if(!empty($kids_to_add)&&!empty($test))$kids_to_add=$kids_to_add+$test;
+                    elseif(!empty($test))$kids_to_add=$test;
+                }
+            }
+        }
+
+        foreach($kids_to_add as $ktaid=>$kid_to_add){
+            $kids[$query_nid]->children[$ktaid]=$ktaid;
+        }
+
+//        if(!empty($kids_to_add)&&!empty($kids))$kids=$kids+$kids_to_add;
+
+
+    }
+    echo('</div>(((RETURNING on '.$query_nid.')))<hr/>');
+    return $kids;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_prototype_numeric_list(){
+
+    $sql_children="SELECT node.nid AS nid,
+       node.vid AS node_vid,
+       node.title AS node_title
+     FROM node node";
+
+    $db_query_children=db_query($sql_children);
+
+    echo("<ul>\n");
+    foreach($db_query_children as $row){
+    	$nd=node_load($row->nid);
+    	echo("<li style=\"display:inline;font-size:250%;padding:.5em;\">\n");
+    	if(isset($nd->path)) echo("<a href=\"/".$nd->path."\">\n");
+    	else echo("<a href=\"/node/".$row->nid."\">\n");
+    	echo("<span class=\"number\">".$row->nid."</span>\n");
+    	echo("</a>\n");
+    	echo("</li>\n");
+    }
+    echo("</ul>\n\n");
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function dumpdaitemmang($item,$image_size,$show_children,$show_random_child,$by_context,$show_multi_image,$by_type,$show_date,$show_outer_contexts){ ?>
+
+
+
+<?php #if(!empty($item->field_context)&&$by_context&&!empty($item->field_context[$by_context])){ ?>
+
+<?php #if($item->field_context[$by_context]['weight']<=35){ ?>
+        <!--li class="importance-small"-->
+<?php #}elseif($item->field_context[$by_context]['weight']>35&&$item->field_context[$by_context]['weight']<=65){ ?>
+        <!--li class="importance-medium"-->
+<?php #}elseif($item->field_context[$by_context]['weight']>65&&$item->field_context[$by_context]['weight']<=100){ ?>
+        <!--li class="importance-large"-->
+<?php #} ?>
+
+
+<?php #}elseif($item->nid==arg(1)){ ?>
+        <!--li class="selected"-->
+<?php #}else{ ?>
+        <li>
+<?php #} ?>
+
+
+
+            <a href="/<?php echo(drupal_get_path_alias('node/'.$item->nid)); ?>">
+
+
+                <span class="title"><?php echo($item->title); ?></span>
+
+
+<?php if(!empty($item->field_subtitle)): ?>
+                <span class="subtitle"><?php echo($item->field_subtitle[LANGUAGE_NONE][0]['value']); ?></span>
+<?php endif; ?>
+
+
+
+
+<?php //                SHOW ITEM (IMAGE(S))              // ?>
+
+<?php if(!empty($item->field_images)): ?>
+
+
+<span class="imagery"><img src="<?php echo(image_style_url($image_size,$item->field_images[LANGUAGE_NONE][0]["uri"])); ?>" alt=""/></span>
+
+
+<?php if($show_multi_image&&count($item->field_images[LANGUAGE_NONE])>1): ?>
+<span class="sub_imagery">
+<?php for($y=1;$y<count($item->field_images[LANGUAGE_NONE]);$y++){ ?>
+<?php if($y<7): ?>
+<img src="<?php echo(image_style_url($image_size,$item->field_images[LANGUAGE_NONE][$y]["uri"])); ?>" alt=""/>
+<?php endif; ?>
+<?php } ?>
+</span>
+<?php endif; ?>
+
+
+
+<?php elseif(!empty($item->body[LANGUAGE_NONE])): ?>
+
+<?php
+$test = strip_tags($item->body[LANGUAGE_NONE][0]['value']);
+$test = substr($test,0,225);
+?>
+                <span class="body"><?php echo($test); ?>...</span>
+<?php endif; ?>
+
+
+<?php //            end:SHOW ITEM (IMAGE(S))              // ?>
+
+
+
+
+
+
+
+<?php if($show_random_child): ?>
+<span class="recent-example-children">
+<?php
+global $subjects;
+if(isset($subjects[$item->nid])&&count($subjects[$item->nid]->uses)){
+
+    if(count($subjects[$item->nid]->uses)<$show_random_child) $show_random_child=count($subjects[$item->nid]->uses);
+print_r($subjects[$item->nid]->uses);
+    for($i=0;$i<$show_random_child;$i++){
+
+        ////////////////////////////////////////////$random_key=array_rand($subjects[$item->nid]->uses,1);
+        $rndmchildcontent=node_load($subjects[$item->nid]->uses[$i]);
+        //echo($rndmchildcontent->title);
+?>
+
+<? if(!empty($rndmchildcontent->field_images)): ?>
+    <img src="<?php echo(image_style_url($image_size,$rndmchildcontent->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
+<?php else: ?>
+<? if(!empty($rndmchildcontent->body[LANGUAGE_NONE][0]['value'])){ ?>
+<?php
+$tteesstt=strip_tags($rndmchildcontent->body[LANGUAGE_NONE][0]['value']);
+$tteesstt=substr($tteesstt,0,225);
+?>
+    <span class="body"><?php echo($tteesstt); ?>...</span>
+<?php } ?>
+<?php endif; ?>
+
+<?php
+    }
+}
+?>
+</span>
+<?php endif; ?>
+
+
+
+
+
+
+
+
+<?php if(!empty($item->connections)&&$show_outer_contexts){ ?>
+
+
+<?php global $types; global $subjects; ?>
+
+
+                <span class="details">
+
+<?php foreach($item->connections as $item_context){ ?>
+
+
+
+<?php if(isset($types[$item_context['nid']])): ?>
+
+                <span class="outer-prototypes<?php if(isset($by_type)&&$item_context['nid']==$by_type): ?> selected<?php endif; ?>">
+
+                    <?php if(!empty($types[$item_context['nid']]->field_images[LANGUAGE_NONE])): ?>
+                        <img src="<?php echo(image_style_url('thumbnail',$types[$item_context['nid']]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
+                        <?php endif; ?>
+                        <span class="title"><?php echo($types[$item_context['nid']]->title); ?></span>
+            </span>
+
+
+<?php elseif(isset($subjects[$item_context['nid']])): ?>
+
+                <span class="outer-contexts<?php if(isset($by_context)&&$item_context['nid']==$by_context): ?> selected<?php endif; ?>">
+
+                    <?php if(!empty($subjects[$item_context['nid']]->field_images[LANGUAGE_NONE])): ?>
+                        <img src="<?php echo(image_style_url('thumbnail',$subjects[$item_context['nid']]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
+                        <?php endif; ?>
+                        <span class="title"><?php echo($subjects[$item_context['nid']]->title); ?></span>
+
+            </span>
+
+<?php endif; ?>
+
+<?php } ?>
+
+                </span>
+<?php } ?>
+
+
+
+
+
+<?php
+//if(isset($variables['show_outer_contexts_notes'])){
+    global $subjects;
+    global $nd;
+?>
+<?php if(isset($nd->nid)&&isset($subjects[$nd->nid])): ?>
+<?php if($notes_key=search_for_attribute(variable_get('organic_connectivity_context_prototype',''),$nd->nid,$item->connections)){ ?>
+<strong><?php echo($item->connections[$notes_key]['notes']); ?></strong>
+<?php } ?>
+<?php endif; ?>
+<?php
+//}
+?>
+
+
+
+
+
+
+<?php if($show_date): ?>
+<span class="date"><?php echo(date($show_date,$item->created)); ?></span>
+<?php endif; ?>
+
+
+
+
+
+
+<?php if($show_children){ ?>
+
+<?php global $subjects; global $types; ?>
+
+<?php if(isset($subjects[$item->nid])): ?>
+<span class="children-count"><?php echo(count($subjects[$item->nid]->uses)); ?></span>
+<?php endif; ?>
+
+<?php if(isset($types[$item->nid])): ?>
+<span class="children-count-prototypical"><?php echo(count($types[$item->nid]->typeUses)); ?></span>
+<?php endif; ?>
+
+<?php } ?>
+
+
+
+
+<?php
+    # Show children subjects
+    #echo(print_r($subjects[$item->nid]->children));
+?>
+
+
+
+
+            </a>
+        </li>
+<?php } ?>

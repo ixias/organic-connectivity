@@ -1,0 +1,4 @@
+name = OrganicConnectivity
+description = Defining/retrieving nodal connections
+core = 7.x
+files[] = organic_connectivity.module;

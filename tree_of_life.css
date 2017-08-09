@@ -1,0 +1,332 @@
+
+
+/* copy?:
+
+.tree-of-life ul li.active > a:after{
+    content: ":HERE";
+    font-size: 30px;
+    color: rgba(0,0,0,1);
+}
+
+
+.tree-of-life{
+    width: 200px;
+    height: 379px;
+    margin: 0 auto 20px auto;
+    position: relative;
+    / *background: transparent url(tol.png) scroll no-repeat top left;* /
+    opacity: 1;
+}
+.tree-of-life ul{
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.tree-of-life ul li{
+	position: absolute;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+.tree-of-life ul li a{
+	color: #444;
+	text-decoration: none;
+}
+.tree-of-life ul li a:hover{
+	color: rgba(255,0,255,1);
+}
+
+.tree-of-life ul#spheres li{
+	width: 62px;
+	height: 62px;
+}
+.tree-of-life ul#spheres li a .translation{
+	font-size: 58%;
+	color: #666;
+	display: block;
+}
+.tree-of-life ul#spheres li a .numerological{
+	font-size: 90%;
+	color: #333;
+	display: block;
+}
+.tree-of-life ul#spheres li a .subtitle{
+    font-size: 8px;
+    display: none;
+}
+.tree-of-life ul#spheres li a .icon{
+    display: block;
+}
+.tree-of-life ul#spheres li a img{
+    width: 20px;
+}
+.tree-of-life ul#spheres li a{
+	display: block;
+	width: 62px;
+	height: 53px;
+	padding: 9px 0 0 0;
+	overflow: hidden;
+	text-align: center;
+	background: transparent url(tol.png) scroll no-repeat top left;
+	border: 0 none;
+	margin: 0;
+	text-decoration: none;
+	font-size: 123%;
+	line-height: .65em;
+}
+.tree-of-life ul#spheres li.active > a{
+	color: rgba(255,0,255,1);
+}
+.tree-of-life ul#spheres li.active > a .numerological{
+	color: white;
+}*/
+
+
+/*.tree-of-life ul#spheres li#sphere-1 a{
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><circle opacity='50.000000e-02' fill='#FFFFFF' stroke='#231F20' stroke-width='5' stroke-miterlimit='10' r='20'/></svg>");
+}*/
+
+/*.tree-of-life ul li#sphere-1{ top:2px; left:69px; }
+.tree-of-life ul li#sphere-1 a{ background-position:-69px -2px; }
+.tree-of-life ul li#sphere-1 a:hover, .tree-of-life ul li#sphere-1.active a{ background-position:-269px -2px; }
+.tree-of-life ul li#sphere-2{ top:41px; left:136px; }
+.tree-of-life ul li#sphere-2 a{ background-position:-136px -41px; }
+.tree-of-life ul li#sphere-2 a:hover, .tree-of-life ul li#sphere-2.active a{ background-position:-336px -41px; }
+.tree-of-life ul li#sphere-3{ top:41px; left:2px; }
+.tree-of-life ul li#sphere-3 a{ background-position:-2px -41px; }
+.tree-of-life ul li#sphere-3 a:hover, .tree-of-life ul li#sphere-3.active a{ background-position:-202px -41px; }
+.tree-of-life ul li#sphere-4{ top:120px; left:136px; }
+.tree-of-life ul li#sphere-4 a{ background-position:-136px -120px; }
+.tree-of-life ul li#sphere-4 a:hover, .tree-of-life ul li#sphere-4.active a{ background-position:-336px -120px; }
+.tree-of-life ul li#sphere-5{ top:120px; left:2px; }
+.tree-of-life ul li#sphere-5 a{ background-position:-2px -120px; }
+.tree-of-life ul li#sphere-5 a:hover, .tree-of-life ul li#sphere-5.active a{ background-position:-202px -120px; }
+.tree-of-life ul li#sphere-6{ top:158px; left:69px; }
+.tree-of-life ul li#sphere-6 a{ background-position:-69px -158px; }
+.tree-of-life ul li#sphere-6 a:hover, .tree-of-life ul li#sphere-6.active a{ background-position:-269px -158px; }
+.tree-of-life ul li#sphere-7{ top:198px; left:136px; }
+.tree-of-life ul li#sphere-7 a{ background-position:-136px -198px; }
+.tree-of-life ul li#sphere-7 a:hover, .tree-of-life ul li#sphere-7.active a{ background-position:-336px -198px; }
+.tree-of-life ul li#sphere-8{ top:198px; left:2px; }
+.tree-of-life ul li#sphere-8 a{ background-position:-2px -198px; }
+.tree-of-life ul li#sphere-8 a:hover, .tree-of-life ul li#sphere-8.active a{ background-position:-202px -198px; }
+.tree-of-life ul li#sphere-9{ top:237px; left:69px; }
+.tree-of-life ul li#sphere-9 a{ background-position:-69px -237px; }
+.tree-of-life ul li#sphere-9 a:hover, .tree-of-life ul li#sphere-9.active a{ background-position:-269px -237px; }
+.tree-of-life ul li#sphere-10{ top:315px; left:69px; }
+.tree-of-life ul li#sphere-10 a{ background-position:-69px -315px; }
+.tree-of-life ul li#sphere-10 a:hover, .tree-of-life ul li#sphere-10.active a{ background-position:-269px -315px; }
+.tree-of-life ul li#sphere-33{ top:80px; left:69px; }
+.tree-of-life ul li#sphere-33 a{ background-position:-69px -80px; }
+.tree-of-life ul li#sphere-33 a:hover, .tree-of-life ul li#sphere-33.active a{ background-position:-269px -px; }
+
+nav.tree-of-life ul#paths li{
+	width: 11px;
+	height: 22px;
+	line-height: 14px;
+}
+nav.tree-of-life ul#paths li a .numerological{
+    font-size: 7px;
+    line-height: 7px;
+}
+.tree-of-life ul#paths li a .subtitle{
+    font-size: 8px;
+    display: none;
+}
+.tree-of-life ul#paths li#path-11{ left:130px; top:40px; }
+.tree-of-life ul#paths li#path-12{ left:60px; top:40px; }
+.tree-of-life ul#paths li#path-13{ left:98px; top:76px; }
+.tree-of-life ul#paths li#path-14{ left:97px; top:61px; }
+.tree-of-life ul#paths li#path-15{ left:137px; top:106px; }
+.tree-of-life ul#paths li#path-16{ left:166px; top:101px; }
+.tree-of-life ul#paths li#path-17{ left:58px; top:106px; }
+.tree-of-life ul#paths li#path-18{ left:29px; top:101px; }
+.tree-of-life ul#paths li#path-19{ left:97px; top:139px; }
+.tree-of-life ul#paths li#path-20{ left:133px; top:161px; }
+.tree-of-life ul#paths li#path-21{ left:165px; top:179px; }
+.tree-of-life ul#paths li#path-22{ left:62px; top:158px; }
+.tree-of-life ul#paths li#path-23{ left:29px; top:180px; }
+.tree-of-life ul#paths li#path-24{ left:133px; top:199px; }
+.tree-of-life ul#paths li#path-25{ left:97px; top:218px; }
+.tree-of-life ul#paths li#path-26{ left:63px; top:200px; }
+.tree-of-life ul#paths li#path-27{ left:106px; top:219px; }
+.tree-of-life ul#paths li#path-28{ left:130px; top:237px; }
+.tree-of-life ul#paths li#path-29{ left:133px; top:275px; }
+.tree-of-life ul#paths li#path-30{ left:64px; top:238px; }
+.tree-of-life ul#paths li#path-31{ left:59px; top:275px; }
+.tree-of-life ul#paths li#path-32{ left:96px; top:297px; }
+.tree-of-life ul#paths li.active a{
+	background-color: rgba(255,0,255,1);
+	color: rgba(255,255,255,1);
+	border-radius: 4px;
+	padding: 1px;
+}
+*/
+
+
+
+
+
+nav.tree-of-life{
+    /*width: 200px;
+    height: 379px;*/
+    margin: 0 auto;
+    position: relative;
+    /*background: transparent url(tol_web.png) scroll no-repeat top left;*/
+}
+nav.tree-of-life > ul{
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+nav.tree-of-life > ul#spheres{
+	/*height: 379px;
+	background: transparent url(Astro_TOL2012.png) scroll no-repeat center -105px;*/
+}
+nav.tree-of-life > ul li{
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    top: -9999px;
+}
+nav.tree-of-life > ul#spheres li{
+	opacity: .6;
+	width: 62px;
+	height: 62px;
+	border: thin solid magenta;
+	border-radius: 31px;
+	overflow: hidden;
+}
+nav.tree-of-life ul#paths li{
+	width: 11px;
+	height: 22px;
+}
+nav.tree-of-life ul#spheres li:hover{
+	opacity: 1;
+}
+nav.tree-of-life ul li a{
+	color: #444;
+	border: none;
+}
+nav.tree-of-life ul#spheres li a{
+	display: block;
+	height: 52px;
+	line-height: 21px;
+	text-align: center;
+	border: 0 none;
+	padding-top: 10px;
+}
+nav.tree-of-life ul li a:hover{
+	color: magenta;
+}
+nav.tree-of-life ul li#sphere-1{ top:2px; left:69px; background-position:-69px -2px; }
+nav.tree-of-life ul li#sphere-1:hover{ background-position:-269px -2px; }
+nav.tree-of-life ul li#sphere-2{ top:41px; left:136px; background-position:-136px -41px; }
+nav.tree-of-life ul li#sphere-2:hover{ background-position:-336px -41px; }
+nav.tree-of-life ul li#sphere-3{ top:41px; left:2px; background-position:-2px -41px; }
+nav.tree-of-life ul li#sphere-3:hover{ background-position:-202px -41px; }
+nav.tree-of-life ul li#sphere-111{ top:80px; left:69px; background-position:-69px -80px; }
+nav.tree-of-life ul li#sphere-111:hover{ background-position:-269px -px; }
+
+nav.tree-of-life ul li#sphere-4{ top:120px; left:136px; background-position:-2px -120px; }
+nav.tree-of-life ul li#sphere-4:hover{ background-position:-202px -120px; }
+
+nav.tree-of-life ul li#sphere-5{ top:120px; left:2px; background-position:-136px -120px; }
+nav.tree-of-life ul li#sphere-5:hover{ background-position:-336px -120px; }
+
+nav.tree-of-life ul li#sphere-6{ top:158px; left:69px; background-position:-69px -158px; }
+nav.tree-of-life ul li#sphere-6:hover{ background-position:-269px -158px; }
+nav.tree-of-life ul li#sphere-7{ top:198px; left:136px; background-position:-136px -198px; }
+nav.tree-of-life ul li#sphere-7:hover{ background-position:-336px -198px; }
+nav.tree-of-life ul li#sphere-8{ top:198px; left:2px; background-position:-2px -198px; }
+nav.tree-of-life ul li#sphere-8:hover{ background-position:-202px -198px; }
+nav.tree-of-life ul li#sphere-9{ top:237px; left:69px; background-position:-69px -237px; }
+nav.tree-of-life ul li#sphere-9:hover{ background-position:-269px -237px; }
+nav.tree-of-life li#sphere-10{ top:315px; left:69px; background-position:-69px -315px; }
+nav.tree-of-life ul li#sphere-10:hover{ background-position:-269px -315px; }
+
+nav.tree-of-life ul li a .numerological{
+	font-size: 16px;
+	display: block;
+}
+nav.tree-of-life ul li a:hover .numerological{
+	color: #111;
+}
+nav.tree-of-life ul li a .title{
+    font-size: 10px;
+}
+nav.tree-of-life ul li a .subtitle{
+    display: none;
+}
+
+nav.tree-of-life ul#paths li#path-11{ left:130px; top:40px; }
+nav.tree-of-life ul#paths li#path-12{ left:60px; top:40px; }
+nav.tree-of-life ul#paths li#path-13{ left:98px; top:76px; }
+nav.tree-of-life ul#paths li#path-14{ left:97px; top:61px; }
+nav.tree-of-life ul#paths li#path-15{ left:137px; top:106px; }
+nav.tree-of-life ul#paths li#path-16{ left:166px; top:101px; }
+nav.tree-of-life ul#paths li#path-17{ left:58px; top:106px; }
+nav.tree-of-life ul#paths li#path-18{ left:29px; top:101px; }
+nav.tree-of-life ul#paths li#path-19{ left:97px; top:139px; }
+nav.tree-of-life ul#paths li#path-20{ left:133px; top:161px; }
+nav.tree-of-life ul#paths li#path-21{ left:165px; top:179px; }
+nav.tree-of-life ul#paths li#path-22{ left:62px; top:158px; }
+nav.tree-of-life ul#paths li#path-23{ left:29px; top:180px; }
+nav.tree-of-life ul#paths li#path-24{ left:133px; top:199px; }
+nav.tree-of-life ul#paths li#path-25{ left:97px; top:218px; }
+nav.tree-of-life ul#paths li#path-26{ left:63px; top:200px; }
+nav.tree-of-life ul#paths li#path-27{ left:106px; top:219px; }
+nav.tree-of-life ul#paths li#path-28{ left:130px; top:237px; }
+nav.tree-of-life ul#paths li#path-29{ left:133px; top:275px; }
+nav.tree-of-life ul#paths li#path-30{ left:64px; top:238px; }
+nav.tree-of-life ul#paths li#path-31{ left:59px; top:275px; }
+nav.tree-of-life ul#paths li#path-32{ left:96px; top:297px; }
+nav.tree-of-life ul#paths li a.active{
+    background-color: magenta;
+    color: #fff;
+}
+
+
+nav.tree-of-life svg a{
+    cursor: pointer;
+}
+svg g#Paths2 a line,
+svg g#Spheres2 a circle{
+    transition: 1s;
+}
+svg g#Paths2 a:hover line,
+svg g#Spheres2 a:hover circle{
+    stroke: rgba(255,0,255,1);
+    stroke-width: 15px;
+}
+svg g#Paths2 a text{
+    font-size: 30px;
+    fill: rgba(255,0,255,.97);
+}
+svg g#Spheres2 a text{
+    font-size: 35px;
+}
+svg g#Paths2 a:hover text{
+    fill: rgba(0,0,0,1);
+}
+svg g#Spheres2 a:hover text{
+    fill: rgba(255,0,255,1);
+}
+svg g#Spheres2 a text tspan{
+    fill: rgba(255,0,255,1);
+    font-size: 25px;
+}
+svg g#Spheres2 a text tspan.numerological,
+svg g#Paths2 a text tspan.numerological{
+    font-size: 20px;
+    fill: rgba(25,25,25,.97);
+}
+svg g#Spheres2 a text tspan.translation,
+svg g#Paths2 a text tspan.translation{
+    font-size: 30px;
+    fill: rgba(25,25,25,.85);
+}
+svg g#Spheres2 a:hover text tspan.translation,
+svg g#Paths2 a:hover text tspan.translation{
+    fill: rgba(25,25,25,.98);
+}

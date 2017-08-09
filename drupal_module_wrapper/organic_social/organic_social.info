@@ -1,0 +1,5 @@
+name = Organic Social
+description = Social network connectivity, inner messaging, profiles and user management.
+package = Organic Connectivity
+core = 7.x
+files[] = organic_social.module;

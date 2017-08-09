@@ -1,0 +1,83 @@
+<?php
+
+
+//////// builds context tree by checking subjects //////////////////
+
+/*function organic_context_build_tree(&$subjects){
+    foreach($subjects as $key=>$context){
+        if(!empty($context->field_context)){
+            $context_collection_id = $context->field_context[LANGUAGE_NONE][0]['value'];
+            $context_collection_set = entity_load('field_collection_item',array($context_collection_id));
+            if(!empty($context_collection_set[$context_collection_id]->field_connection)){
+                $context_nid=$context_collection_set[$context_collection_id]->field_connection[LANGUAGE_NONE][0]["nid"];
+                organic_context_insert_into_tree($subjects,$context_nid,$context);
+                unset($subjects[$key]);
+            }
+        }
+    }
+}*/
+
+
+////////// obtains all subjects by checking exposure field ////////////////////
+
+/*function organic_context_insert_into_tree(&$subjects,$location,$node_to_insert){
+    $gotit = FALSE;
+    foreach($subjects as $key=>$leaf){
+        #echo('-testing-'.$leaf->nid.'<br/>');
+        if($leaf->nid==$location){
+            #echo('-found-<br/>');
+            $subjects[$key]->children[$node_to_insert->nid]=$node_to_insert;
+            return TRUE;
+        }
+        elseif(!$gotit&&!empty($leaf->children)){
+            #print '-goin in-<br/>';
+            $gotit = organic_context_insert_into_tree($leaf->children,$location,$node_to_insert);
+        }
+    }
+    #print '-returnin-<br/><br/>';
+}*/
+
+
+/*function organic_context_locate_in_tree(&$tree,$q){
+    foreach($tree as $key=>$leaf){
+        if(!empty($leaf->children)){
+            #echo('-testing-'.$leaf->nid.'<br/>');
+            if($leaf->nid==$q){
+                #echo('-found-<br/>');
+                return $leaf->children;
+            }
+            else{
+                #print '-goin in-<br/>';
+                if($gotit=organic_context_locate_in_tree($leaf->children,$q))
+                    return $gotit;
+            }
+        }
+    }
+    #print '-returnin-<br/><br/>';
+    //return $gotit;
+}*/
+
+
+/*
+function organic_context_add_children_recursively($query){
+    if($children = organic_context_obtain_entities_by_type($query)){
+        foreach($children as $details)
+            $details->children = organic_context_add_children_recursively( $details->nid );
+        return $children;
+    }
+}
+function addChildren($groups, $query){
+    $children = array();
+    foreach($groups as $details){
+        if(isset($details["group"]) && $details["group"]==$query){
+            $key=array_push($children,$details);
+            $children[$key-1]["children"]=addChildren($groups, $details["id"]);
+        }
+    }
+    return $children;
+}
+*/
+
+
+
+?>

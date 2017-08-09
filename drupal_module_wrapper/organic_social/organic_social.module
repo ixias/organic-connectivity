@@ -1,0 +1,529 @@
+<?php
+function organic_social_welcome(){ return 'Welcome to OrganicUser';}
+/*
+function covidien_users_register_thanks(){
+    return theme('user_register_thanks');
+}
+function covidien_users_welcome(){
+    return theme('user_welcome');
+}
+function covidien_users_password(){
+    if($_SERVER['REQUEST_METHOD']=='POST') return theme('user_password_lookup_results');
+    else return theme('user_password_lookup_form');
+}
+*/
+///////////////////////////////////////////////////////// PAGE DEFINITIONS /////////////////////////////////////////////////////////
+
+function organic_social_menu(){
+    return array(
+        'people' => array(
+            'title' => 'Users',
+            'description' => '....',
+            'page callback' => 'organic_social_welcome',
+            'access callback' => 'organic_social_super_user_access',
+            'menu_name' => 'main-menu',
+        ),
+        'people/manage' => array(
+            'title' => 'Manage Users',
+            'description' => '....',
+            'page callback' => 'theme',
+            'page arguments' => array('user_manager'),
+            'access callback' => 'organic_social_super_user_access',
+            'menu_name' => 'main-menu',
+        ),
+        'people/manage2' => array(
+            'title' => 'Manage Users - Integrate',
+            'description' => '....',
+            'page callback' => 'theme',
+            'page arguments' => array('user_customers'),
+            'access callback' => 'organic_social_super_user_access',
+            'menu_name' => 'main-menu',
+        ),
+        'people/activations' => array(
+            'title' => 'Activations',
+            'description' => '....',
+            'page callback' => 'theme',
+            'page arguments' => array('user_activations'),
+            'access callback' => 'organic_social_super_user_access',
+            'menu_name' => 'main-menu',
+        ),
+        'people/deactivate' => array(
+            'title' => 'Deactivate',
+            'description' => '....',
+            'page callback' => 'theme',
+            'page arguments' => array('user_deactivate'),
+            'access callback' => 'organic_social_super_user_access',
+            'menu_name' => 'main-menu',
+        ),
+        /*
+        'user/registration' => array(
+            'title' => 'User Registration',
+            'description' => '....',
+            'page callback' => 'covidien_users_reg_callback',
+            'access callback' => TRUE,
+        ),
+        'user/thanks' => array(
+            'title' => 'Thanks for Registering',
+            'description' => '....',
+            'page callback' => 'covidien_users_register_thanks',
+            'access callback' => TRUE,
+        ),
+        'user/welcome' => array(
+            'title' => 'Welcome to the Covidien Portal',
+            'description' => '....',
+            'page callback' => 'covidien_users_welcome',
+            'access callback' => TRUE,
+        ),
+        'user/sendpassword' => array(
+            'title' => 'Forgot your email or password?',
+            'description' => '....',
+            'page callback' => 'covidien_users_password',
+            'access callback' => TRUE,
+        ),
+        'user/requestchanges' => array(
+            'title' => 'Request Further Profile Changes',
+            'description' => '....',
+            'page callback' => 'covidien_users_further_changes_contact_form',
+            'access callback' => TRUE,
+        ),
+        */
+
+        'lastfm'=>array(
+            'title'=>'Listening',
+            'description' => '....',
+            'page callback' => 'organic_social_lastfm',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+        ),
+        'lastfm/recently-loved-200'=>array(
+            'title'=>'Recently Loved 200',
+            'description' => '....',
+            'page callback' => 'organic_social_lastfm_recently_loved_200',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+        ),
+        'lastfm/recently-played-100'=>array(
+            'title'=>'Recently Played 100',
+            'description' => '....',
+            'page callback' => 'organic_social_lastfm_recently_played_100',
+            'access callback' => TRUE,
+            'menu_name' => 'main-menu',
+        ),
+
+    );
+}
+
+///////////// Add topic prototype options to the OrganicConnectivity config form /////////////
+
+function organic_social_form_organic_prototype_config_page_alter(&$form,&$form_state,$form_id){
+
+    $form['organic_connectivity_topic_prototype'] = array(
+        '#type'=>'textfield',
+        '#title'=>t('Define prototype for forum topics'),
+        '#default_value'=>variable_get('organic_connectivity_topic_prototype',''),
+        '#description'=>t('Define prototype for forum topics'),
+        '#required'=>FALSE,
+    );
+
+    return $form;
+
+}
+
+/////////////////// CONTROL ACCESS TO PAGES ///////////////////
+
+function organic_social_super_user_access(){
+    global $user;
+    if(in_array('super user',$user->roles)) return TRUE;
+    return FALSE;
+}
+/*function covidien_users_manage_page_access(){
+    global $user;
+    if( in_array('super user', $user->roles) || in_array('sales regional manager', $user->roles) ) return TRUE;
+    return FALSE;
+}
+function covidien_users_activations_page_access(){
+    global $user;
+    if( array_search('super user', $user->roles)
+        || array_search('sales regional manager', $user->roles)
+        || array_search('sales rep', $user->roles) )
+    return TRUE;
+    return FALSE;
+}
+function covidien_users_customers_page_access(){
+    global $user;
+    if( array_search('sales rep', $user->roles) ) return TRUE;
+    return FALSE;
+}
+*/
+
+
+/////////////////// INITIALIZE THEMEABLE OUTPUTS ///////////////////
+
+function organic_social_theme(){
+    return array(
+        'forum_topics'=>array(
+            'template'=>'forum_topics',
+            'variables'=>array(
+                'perpage'=>5,
+            ),
+        ),
+        'user_manager'=>array(
+            'template'=>'user_manager',
+            'variables'=>array(
+                'perpage'=>5,
+            ),
+        ),
+        'user_customers' => array(
+            'template' => 'user_customers',
+        ),
+        'user_activations' => array(
+            'template' => 'user_activations',
+        ),
+        'user_activations_nav_notification' => array(
+            'template' => 'user_activations_nav_notification',
+        ),
+        'user_deactivate' => array(
+            'template' => 'user_deactivate',
+        ),
+        /*'user_register_thanks' => array(
+            'template' => 'user_register_thanks',
+        ),
+        'user_welcome' => array(
+            'template' => 'user_welcome',
+        ),
+        'user_password_lookup_form' => array(
+            'template' => 'user_password_lookup_form',
+        ),
+        'user_password_lookup_results' => array(
+            'template' => 'user_password_lookup_results',
+        ),
+        */
+        'logged_in_controls' => array(
+            'template' => 'logged_in_controls',
+        ),
+        'users_vcard' => array(
+            'template' => 'users_vcard',
+        ),
+    );
+}
+
+
+
+
+/////////////////// PREPARE DATA FOR THEMEABLE OUTPUTS ///////////////////
+
+function organic_social_preprocess_user_manager(&$variables, $hook){
+
+    // Obtain all users
+    $variables['users']=entity_load('user');
+    unset($variables['users'][0]);
+
+    // If search term is entered, remove users that don't match
+    if(isset($_POST['search-name']) && $_POST['search-name']!=''){
+        foreach($variables['users'] as $uid=>$acct){
+            if($acct->name!=''){
+                $searchFields=$acct->field_first_name[LANGUAGE_NONE][0]['value'].' '.$acct->field_last_name[LANGUAGE_NONE][0]['value'];
+                if(!is_integer(stripos($searchFields,$_POST['search-name']))) unset($variables['users'][$uid]);
+            }
+        }
+    }
+
+    // If role filter is selected, remove users that don't match
+    if(isset($_POST['filter-by-role']) && $_POST['filter-by-role']!='')
+        foreach($variables['users'] as $uid=>$acct)
+            if($acct->name!='')
+                if(!array_search($_POST['filter-by-role'], $acct->roles)) unset($variables['users'][$uid]);
+
+    // If activity filter is selected, remove users that don't match
+    if( isset($_POST['filter-by']) && $_POST['filter-by']!='all'){
+        if($_POST['filter-by']=='active'){
+            foreach($variables['users'] as $uid=>$acct)
+                if($acct->name!='')
+                    if($acct->status!='1') unset($variables['users'][$uid]);
+        }
+        elseif($_POST['filter-by']=='inactive'){
+            foreach($variables['users'] as $uid=>$acct)
+                if($acct->name!='')
+                    if($acct->status!='0') unset($variables['users'][$uid]);
+        }
+    }
+
+    // Filter out users that aren't associated with the currently logged-in regional manager
+    global $user;
+    $user_full = user_load($user->uid);
+    if(array_search('sales regional manager', $user->roles)){
+        foreach($variables['users'] as $cid=>$uzer){
+            if(
+                covidien_users_get_region_from_zipcode($uzer->field_primary_location_zip[LANGUAGE_NONE][0]['value'])
+                !=
+                covidien_users_get_region_from_zipcode($user_full->field_primary_location_zip[LANGUAGE_NONE][0]['value'])
+            )
+                unset($variables['users'][$cid]);
+        }
+    }
+
+    // After removing items, rebuild the array
+    $variables['users'] = array_values($variables['users']);
+    #echo('<pre>'.print_r($variables['users'],TRUE).'</pre>\n');
+
+    // Apply sorting, if selected
+    if(isset($_GET['sortby'])){
+        if($_GET['sortby']=='name')
+            usort($variables['users'], function($a, $b){ return strcmp($a->field_first_name[LANGUAGE_NONE][0]['value'], $b->field_first_name[LANGUAGE_NONE][0]['value']); });
+        elseif($_GET['sortby']=='region')
+            usort($variables['users'], function($a, $b){ return strcmp(covidien_users_get_region_from_zipcode($a->field_primary_location_zip[LANGUAGE_NONE][0]['value']), covidien_users_get_region_from_zipcode($b->field_primary_location_zip[LANGUAGE_NONE][0]['value'])); });
+    }
+
+    ######## PAGINATION CALCULATIONS #########
+    # set per-page var
+    if (isset($_GET['perpage'])) $variables['perpage'] = $_GET['perpage'];
+    else $variables['perpage'] = 5;
+    # calc numb of pages
+//    $variables['pages'] = ceil(count($variables['users']) / $variables['perpage']);
+    # which page are we on?
+    if( isset($_GET['page']) && round($_GET['page']) <= $variables['pages'] && round($_GET['page']) > 0 )
+    	$variables['pagination_page'] = round($_GET['page']);
+    else $variables['pagination_page'] = 1;
+    # calc start and end item
+    $variables['startItem'] = (($variables['pagination_page'] - 1) * $variables['perpage']);
+    $variables['endItem'] = $variables['startItem'] + ($variables['perpage']);
+    if( $variables['endItem'] > count($variables['users']) ) $variables['endItem'] = count($variables['users']);
+
+}
+
+
+
+
+
+
+
+
+function organic_social_lastfm(){
+    return 'Tracking thru <a href="http://last.fm">last.fm</a>';
+}
+
+
+
+
+
+function organic_social_lastfm_recently_loved_200(){
+
+    $url="http://ws.audioscrobbler.com/2.0/?method=user.getlovedtracks&user=orgnsm&api_key=0821f688e36a503caef81e7ecbb16f40&limit=200";
+
+$detailsObtained = false; 
+$cobj = curl_init($url);
+$timeout = 5; //set to zero for no timeout
+curl_setopt($cobj, CURLOPT_RETURNTRANSFER,1);
+curl_setopt($cobj, CURLOPT_CONNECTTIMEOUT,$timeout);
+$response = curl_exec($cobj);
+curl_close($cobj);
+
+if ($response) $detailsObtained = true;
+
+if( $detailsObtained ){
+	$doc = new DOMDocument();
+	$doc->loadXML($response);
+	#echo $doc->saveXML();
+	#echo(trans($response, "audioscrobbler.xsl", $_GET));
+
+	//$recenttracks = $doc->documentElement;
+	$recenttracks = $doc->getElementsByTagName("lovedtracks")->item(0);
+
+	foreach( $recenttracks->childNodes as $track ){
+		if( $track->nodeType == 1 && $track->nodeName == "track" ){
+			foreach( $track->childNodes as $track_detail ){
+				if( $track_detail->nodeType == 1 ){
+					if( $track_detail->nodeName == "artist" ){
+						$track_details["artist"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+					}
+					elseif ($track_detail->nodeName == "name") {
+						$track_details["name"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+					}
+					elseif ($track_detail->nodeName == "url") {
+						$track_details["url"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+					}
+					elseif ($track_detail->nodeName == "date") {
+						$track_details["date"] = $track_detail->textContent;
+					}
+				}
+			}
+			$tracks[] = $track_details;
+		}
+	}
+
+}
+else {
+	echo("No data obtained");
+}
+
+
+
+
+
+if( isset($tracks) && count($tracks) ){
+	$return="<ol>";
+	//$dumped = 0;
+	foreach( $tracks as $track ){
+		//if( $dumped<$parameters["items"] ){
+			$return.="	<li>".$track["artist"]." - ".$track["name"]."</li>\n";
+			//$dumped++;
+		//}
+	}
+	$return.="</ol>\n\n";
+}
+else {
+	$return="No recent tracks";
+}
+
+
+    $return.='<a href="http://www.last.fm/user/orgnsm/library/loved" class="morelink">All tracks loved by<span>orgnsm</span></a><div class="note">thru Audioscrobbler / Last.fm API</div>';
+
+    return $return;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_social_lastfm_recently_played_100(){
+
+
+    $url="http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=orgnsm&api_key=0821f688e36a503caef81e7ecbb16f40&limit=100";
+
+    $detailsObtained = false; 
+    $cobj = curl_init($url);
+    $timeout = 5; //set to zero for no timeout
+    curl_setopt($cobj, CURLOPT_RETURNTRANSFER,1);
+    curl_setopt($cobj, CURLOPT_CONNECTTIMEOUT,$timeout);
+    $response = curl_exec($cobj);
+    curl_close($cobj);
+
+    if ($response) $detailsObtained = true;
+
+    if( $detailsObtained ){
+    	$doc = new DOMDocument();
+    	$doc->loadXML($response);
+
+        #echo(trans($response, "audioscrobbler.xsl", $_GET));
+
+    	//$recenttracks = $doc->documentElement;
+    	$recenttracks = $doc->getElementsByTagName("recenttracks")->item(0);
+
+    	foreach( $recenttracks->childNodes as $track ){
+    		if( $track->nodeType == 1 && $track->nodeName == "track" ){
+    			foreach( $track->childNodes as $track_detail ){
+    				if( $track_detail->nodeType == 1 ){
+    					if( $track_detail->nodeName == "artist" ){
+    						$track_details["artist"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+    					}
+    					elseif ($track_detail->nodeName == "name") {
+    						$track_details["name"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+    					}
+    					elseif ($track_detail->nodeName == "url") {
+    						$track_details["url"] = htmlentities($track_detail->textContent, ENT_NOQUOTES, "UTF-8");
+    					}
+    					elseif ($track_detail->nodeName == "date") {
+    						$track_details["date"] = $track_detail->textContent;
+    					}
+    					elseif( $track_detail->nodeName == "image" ){
+    						$track_details["img"] = $track_detail->textContent;
+    					}
+    				}
+    			}
+    			$tracks[] = $track_details;
+    		}
+    	}
+    	//echo( "<pre>" . $doc->saveXML() . "</pre>\n" );
+
+    }
+    else {
+    	echo("No data obtained");
+    }
+
+
+    if( isset($tracks) && count($tracks) ){
+    	$return="<ol>";
+    	//$dumped = 0;
+    	foreach( $tracks as $track ){
+    		//if( $dumped<$parameters["items"] ){
+    			$return.="	<li>\n";
+    			if( $track["img"] != "" ) $return.="		<imgsrc=\"".$track["img"]."\" alt=\"\"/>\n";
+    			$return.="		<div><span>".$track["artist"]."</span> ".$track["name"]."</div>\n";
+    			$return.= "	</li>\n";
+    			//$dumped++;
+    		//}
+    	}
+    	$return.="</ol>\n\n";
+    }
+    else {
+    	$return="No recent tracks";
+    }
+
+
+    $return.='<p>http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&amp;user=orgnsm&amp;api_key=0821f688e36a503caef81e7ecbb16f40</p>';
+
+
+    $return.='<a href="http://www.last.fm/user/orgnsm" class="morelink">All tracks played by<span>orgnsm</span></a><div class="note">thru Audioscrobbler / Last.fm API</div>';
+
+    return $return;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function organic_social_preprocess_forum_topics(&$variables,$hook){
+
+    //show forum nodes without a parent
+
+    /*$sql="SELECT node.nid AS nid,
+node.title AS node_title,
+node_data_field_forum.field_forum_nid AS node_data_field_forum_field_forum_nid, node_data_field_forum.nid AS node_data_field_forum_nid, 
+
+node_comment_statistics.comment_count AS node_comment_statistics_comment_count,
+COALESCE(ncs_users.name, node_comment_statistics.last_comment_name) AS node_comment_statistics_last_comment_name,
+ncs_users.name AS ncs_users_name,
+node_comment_statistics.last_comment_uid AS node_comment_statistics_last_comment_uid,
+node_comment_statistics.last_comment_timestamp AS node_comment_statistics_last_comment_timestamp
+
+FROM node node
+LEFT JOIN content_type_forum node_data_field_forum ON node.vid = node_data_field_forum.vid 
+
+INNER JOIN node_comment_statistics node_comment_statistics ON node.nid = node_comment_statistics.nid
+LEFT JOIN users ncs_users ON node_comment_statistics.last_comment_uid = ncs_users.uid AND ncs_users.uid != '0' 
+
+WHERE (node.type in ('forum')) AND (node_data_field_forum.field_forum_nid IS NULL)";
+
+    $variables["res"]=db_query($sql);*/
+
+        $variables["bahh"]=organic_prototype_obtain_entities_by_connection(variable_get('organic_connectivity_topic_prototype',''),"prototypical",TRUE);
+
+}
+
+
+
+?>
