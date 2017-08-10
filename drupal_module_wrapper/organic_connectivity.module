@@ -1,15 +1,4 @@
 <?php
-/// this is still used in ixiasart page.tpl.php, when taxonomy is gone, please delete this
-function taxonomy_node_get_terms_by_vocabulary($node, $vid, $key = 'tid'){
-    $result = db_query('SELECT t.tid, t.* FROM {taxonomy_term_data} t INNER JOIN {taxonomy_index} r ON r.tid = t.tid WHERE t.vid = :vid AND r.nid = :node_nid ORDER BY weight', array(':vid' => $vid, ':node_nid' => $node->nid));
-    return $result->fetchAll();
-}
-
-
-
-
-
-
 
 $GLOBALS['attribs']=array();
 //$GLOBALS['attributes_total_uses']=0;
@@ -22,13 +11,10 @@ $GLOBALS['ATTRIBUTE_PROTOTYPE_VAR']=variable_get('organic_connectivity_attribute
 $GLOBALS['TYPE_PROTOTYPE_VAR']=variable_get('organic_connectivity_prototype_prototype','');
 $GLOBALS['SUBJECT_PROTOTYPE_VAR']=variable_get('organic_connectivity_context_prototype','');
 
-
-
+$GLOBALS['request_tree']=explode("/",$_SERVER['REQUEST_URI']);
+array_shift($GLOBALS['request_tree']);
 
 include_once('/homepages/21/d93015512/htdocs/library/organic_connectivity/io.php');
-
-
-
 
 $GLOBALS['item_viewers']=array(
     'blocks'=>array(
@@ -68,9 +54,6 @@ $GLOBALS['item_viewers']=array(
     ),
 );
 
-
-
-
 $GLOBALS['sortings']=array(
     'created'=>array(
         'title'=>'Date',
@@ -89,14 +72,6 @@ $GLOBALS['sortings']=array(
         //'arg'=>'',
     ),
 );
-
-
-
-
-$GLOBALS['request_tree']=explode("/",$_SERVER['REQUEST_URI']);
-array_shift($GLOBALS['request_tree']);
-
-
 
 
 /*function organic_connectivity_user_access(){
@@ -137,6 +112,7 @@ function organic_connectivity_check_category_access(){
 
 
 function organic_connectivity_output_plain($data_from_theme_template){
+    //// A wrapper function to use Drupal to output plain JSON feeds
     //header('Content-Type:text/xml');
     drupal_add_http_header('Content-Type','text/xml');
     drupal_add_http_header('Charset','utf-8');
@@ -245,20 +221,19 @@ function organic_connectivity_menu(){
             'access callback'=>'organic_connectivity_check_category_access',
             'menu_name'=>'main-menu',
         ),
-        'connectivity/feeds'=>array(
+        /*'connectivity/feeds'=>array(
             'title'=>'ViewerFeeds',
             'description'=>'Your node cataloging viewerFeeds',
             'page callback'=>'organic_connectivity_intro',
             'access callback'=>TRUE,
             'menu_name'=>'main-menu',
-        ),
+        ),*/
         'connectivity/feeds/json_contexts_hierarchical'=>array(
             'title'=>'JSON_Contexts_Hierarchical',
             'description'=>'JSON feed for Force-directed Context Graph',
             'page callback'=>'organic_connectivity_json_hierarchical',
             'delivery callback'=>'drupal_json_output',
             'access callback'=>'organic_connectivity_check_category_access',
-            'menu_name'=>'main-menu',
         ),
         'connectivity/feeds/json_ForceDirected_d3'=>array(
             'title'=>'JSON_ForceDirected_for_d3',
@@ -266,7 +241,6 @@ function organic_connectivity_menu(){
             'page callback'=>'organic_connectivity_json_ForceDirected',
             'delivery callback'=>'drupal_json_output',
             'access callback'=>'organic_connectivity_check_category_access',
-            'menu_name'=>'main-menu',
         ),
         'connectivity/feeds/json_Sunburst'=>array(
             'title'=>'JSON_Sunburst',
@@ -274,7 +248,6 @@ function organic_connectivity_menu(){
             'page callback'=>'organic_connectivity_json_Sunburst',
             'delivery callback'=>'drupal_json_output',
             'access callback'=>'organic_connectivity_check_category_access',
-            'menu_name'=>'main-menu',
         ),
         'connectivity/feeds/json_Sunburst_flat'=>array(
             'title'=>'JSON_Sunburst_flat',
@@ -282,7 +255,6 @@ function organic_connectivity_menu(){
             'page callback'=>'organic_connectivity_json_Sunburst_flat',
             'delivery callback'=>'drupal_json_output',
             'access callback'=>'organic_connectivity_check_category_access',
-            'menu_name'=>'main-menu',
         ),
         'connectivity/feeds/json_sunburst_d3'=>array(
             'title'=>'JSON_Sunburst__expandable',
@@ -290,7 +262,6 @@ function organic_connectivity_menu(){
             'page callback'=>'organic_connectivity_json_sunburst_d3',
             'delivery callback'=>'drupal_json_output',
             'access callback'=>'organic_connectivity_check_category_access',
-            'menu_name'=>'main-menu',
         ),
         'connectivity/sort-by'=>array(
             'title'=>'Sorting',
@@ -349,10 +320,10 @@ function organic_connectivity_menu(){
             'menu_name' => 'main-menu',
         ),
         'connectivity/attributes/prototype/journal'=>array(
-            'title' => 'Journal',
-            'description' => 'Journal entries via JOURNAL prototype',
-            'page callback' => 'theme',
-            'page arguments' => array('items',array(
+            'title'=>'Journal',
+            'description'=>'Journal entries via JOURNAL prototype',
+            'page callback'=>'theme',
+            'page arguments'=>array('items',array(
                 'by_type'=>variable_get('organic_connectivity_journal_prototype',''),
                 'ordering'=>'created',
                 'perpage'=>100,
@@ -366,36 +337,36 @@ function organic_connectivity_menu(){
                 'show_date'=>'Y-m-d',
                 'show_heading'=>TRUE,
             )),
-            'access callback' => TRUE,
-            'menu_name' => 'main-menu',
+            'access callback'=>TRUE,
+            'menu_name'=>'main-menu',
         ),
         'search'=>array(
-            'title' => 'Search',
-            'description' => 'Keyword search',
-            'menu_name' => 'main-menu',
+            'title'=>'Search',
+            'description'=>'Keyword search',
+            'menu_name'=>'main-menu',
         ),
         'http://validator.w3.org/check?uri=referer'=>array(
-            'title' => 'HTML',
-            'description' => 'Check HTML Structure',
-            'menu_name' => 'main-menu',
+            'title'=>'HTML',
+            'description'=>'Check HTML Structure',
+            'menu_name'=>'main-menu',
         ),
         'http://jigsaw.w3.org/css-validator/check/referer'=>array(
-            'title' => 'CSS',
-            'description' => 'Check CSS Structure',
-            'menu_name' => 'main-menu',
+            'title'=>'CSS',
+            'description'=>'Check CSS Structure',
+            'menu_name'=>'main-menu',
         ),
         'http://drupal.org'=>array(
-            'title' => 'Drupal',
-            'description' => 'Powered by Drupal CMS',
-            'menu_name' => 'main-menu',
+            'title'=>'Drupal',
+            'description'=>'Powered by Drupal CMS',
+            'menu_name'=>'main-menu',
         ),
-/*        'node/add/thing' => array(
-            'page callback' => 'organic_connectivity_build_form',
-            'access callback' => 'organic_connectivity_super_user_access',
+/*        'node/add/thing'=>array(
+            'page callback'=>'organic_connectivity_build_form',
+            'access callback'=>'organic_connectivity_super_user_access',
         ),*/
-/*        'node/%/edit' => array(
-            'page callback' => 'organic_connectivity_build_form',
-            'access callback' => 'organic_connectivity_super_user_access',
+/*        'node/%/edit'=>array(
+            'page callback'=>'organic_connectivity_build_form',
+            'access callback'=>'organic_connectivity_super_user_access',
         ),*/
     );
 }
@@ -523,21 +494,16 @@ function organic_connectivity_preprocess(&$variables,$hook){
                 TRUE
             );
             #echo('<pre>'.print_r($attribs,TRUE).'</pre>');
-            /*foreach($attributes as $aid=>$attribute) $attributes[$aid]->connections=organic_connectivity_extract_connections($attribute->field_context);
-            foreach($attributes as $aid=>$attribute){
-                foreach($attribute->field_context as $cid=>$connection){
-                    if($connection['weight']==0&&$connection['response']!=0){    ///the checkings for attributional connectivity....good??
-                        if(!isset($attributes[$cid]->children))
-                            $attributes[$cid]->children=array();
-                        $attributes[$cid]->children[$aid]=$aid;
-                        ///////////////////////////////////////////////////////$subjects[$cid]->hasContextParent=TRUE;
-                    }
-                }
-            }*/
+            foreach($attributes as $aid=>$attribute)
+                $attributes[$aid]->connections=
+                    organic_connectivity_extract_connections($attribute->field_context);
         }
     }
     //// END ATTRIBUTE HOOKS
 
+
+
+    /// BEGIN SUBJECT HOOKS
 
     if($hook=='context_layer'||
        $hook=='parent_context_navigation'||
@@ -597,80 +563,6 @@ function organic_connectivity_preprocess(&$variables,$hook){
         }
 
 
-
-
-
-/*
-        if(!empty($subjects)){
-
-            foreach($subjects as $cid=>$context){
-
-
-                // Add children
-                if(!empty($context->field_context)){
-
-
-
-
-//////////// TODO: use organic_connectivity_extract_connections() here to first add parents to the context
-///////////                   ///////then use parents data to set the children arrays.......
-
-
-$context->parents=array();
-
-                    foreach($context->field_context[LANGUAGE_NONE] as $contextcontext){
-                        $context_collection_set = entity_load('field_collection_item',array($contextcontext['value']));
-                        if(!empty($context_collection_set[$contextcontext['value']]->field_connection)){
-
-
-
-
-$context_nid = $context_collection_set[$contextcontext['value']]->field_connection[LANGUAGE_NONE][0]['target_id'];
-
-
-
-if(!empty($context_collection_set[$contextcontext['value']]->field_notes)){
-
-    $context_notes=$context_collection_set[$contextcontext['value']]->field_notes[LANGUAGE_NONE][0]['value'];
-
-    //add also as parents to the current {aside from the main task of adding children}
-    $context->parents[$context_nid][1]=$context_notes;
-
-}
-else
-    $context_notes='';
-
-
-//if the context has a weight and it's 50 or more, add it as a child context of the outer loop context
-if(!empty($context_collection_set[$contextcontext['value']]->field_weight)){
-
-    $context_weight=$context_collection_set[$contextcontext['value']]->field_weight[LANGUAGE_NONE][0]['value'];
-
-
-    if($context_weight>=50&&$context_notes=='')
-
-        $subjects[$context_nid]->children[$cid]=array($context_weight,$context_notes);
-
-
-    //add also as parents to the current {aside from the main task of adding children}
-    $context->parents[$context_nid][0]=$context_weight;
-
-}
-//else $subjects[$context_nid]->children[$cid] = $context_notes;
-
-
-
-
-
-                        }
-                    }
-                }
-                //else $subjects[$cid]->rootContext=TRUE;
-
-            }
-        }
-*/
-
         //////////////////////////// BREAK CONTEXT LIST INTO CONTEXT GROUPS ///////////////////
         if(isset($variables['break_by_user'])&&$variables['break_by_user']==TRUE){
             $variables['contexts_user_breaks']=array();
@@ -727,9 +619,9 @@ function organic_connectivity_intro(){
         ->condition('type','module')
         ->execute();*/
     /// Incase an importance update is needed with the module load ordering
-    /*db_query("UPDATE {system} SET weight = 100 WHERE name = 'organic_prototype'");
-    db_query("UPDATE {system} SET weight = 90 WHERE name = 'organic_context'");
-    db_query("UPDATE {system} SET weight = 80 WHERE name = 'organic_attribute'");
+    /*db_query("UPDATE {system} SET weight = 100 WHERE name = 'organic_connectivity'");
+    db_query("UPDATE {system} SET weight = 90 WHERE name = 'organic_prototype'");
+    db_query("UPDATE {system} SET weight = 80 WHERE name = 'organic_planner'");
     db_query("UPDATE {system} SET weight = 70 WHERE name = 'organic_qabalah'");
     db_query("UPDATE {system} SET weight = 50 WHERE name = 'organic_calendar'");*/
     /// Incase some collection fields need to be programmatically altered
@@ -758,7 +650,7 @@ function organic_connectivity_intro(){
 <h3>More info</h3>
 <div>
  <a href="http://connectivity.orgnsm.org">http://connectivity.orgnsm.org</a><br/>
- <a href="http://github.com/ixias/organic_connectivity">http://github.com/ixias/organic_connectivity</a>
+ <a href="http://github.com/ixias/organic-connectivity">http://github.com/ixias/organic-connectivity</a>
 </div>'.drupal_render($viewers_menu_items);
 }
 
