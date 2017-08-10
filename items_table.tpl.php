@@ -1,4 +1,4 @@
-<?php global $contexts; ?>
+<?php global $subjects; ?>
 <?php global $types; ?>
 <?php global $attribs; ?>
 
@@ -9,7 +9,7 @@
                 <th>Images</th>
                 <th>Types</th>
                 <th>Title</th>
-                <th>Contexts</th>
+                <th>Subjects</th>
                 <th>Attributes</th>
             </tr>
         </thead>
@@ -43,7 +43,7 @@
 <?php   if($attribute['type']==variable_get('organic_connectivity_prototype_prototype','')){ ?>
                         <li>
                             <a href="/<?php echo(drupal_get_path_alias('node/'.$attribute['nid']));?>">
-                                <?php if(isset($contexts[$attribute['nid']]->field_images[LANGUAGE_NONE])){ ?>
+                                <?php if(isset($subjects[$attribute['nid']]->field_images[LANGUAGE_NONE])){ ?>
                                 <img src="<?php echo(image_style_url('small_list_icon',$types[$attribute['nid']]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
                                 <?php } ?>
                                 <?php echo($types[ $attribute['nid'] ]->title); ?>
@@ -64,10 +64,10 @@
 <?php   if($attribute['type']==variable_get('organic_connectivity_context_prototype','')){ ?>
                     <li>
                         <a href="/<?php echo(drupal_get_path_alias('node/'.$attribute['nid']));?>">
-                            <?php if(isset($contexts[$attribute['nid']]->field_images[LANGUAGE_NONE])){ ?>
-                            <img src="<?php echo(image_style_url('small_list_icon',$contexts[$attribute['nid']]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
+                            <?php if(isset($subjects[$attribute['nid']]->field_images[LANGUAGE_NONE])){ ?>
+                            <img src="<?php echo(image_style_url('small_list_icon',$subjects[$attribute['nid']]->field_images[LANGUAGE_NONE][0]['uri'])); ?>" alt=""/>
                             <?php } ?>
-                            <?php echo($contexts[$attribute['nid']]->title); ?>
+                            <?php echo($subjects[$attribute['nid']]->title); ?>
                         </a>
                     </li>
 <?php   } ?>

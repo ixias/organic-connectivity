@@ -28,15 +28,15 @@
 /////////////////////////////////PRINT CLOUD NORMALLY////////////////////////
 
 ?>
-<?php global $contexts; ?>
+<?php global $subjects; ?>
 <?php global $types; ?>
 
+<?php if(count($subjects)): ?>
 
-<?php if(count($contexts)): ?>
 
     <ul>
 
-<?php foreach($contexts as $nid=>$context){ ?>
+<?php foreach($subjects as $nid=>$context){ ?>
 
 
 <?php
@@ -85,6 +85,7 @@ elseif($uses>=30) $popularityCategory=4;
 <?php //                     THE NON-DRUPAL WAY:                            ?>
 
 
+<?php if(!function_exists('arg')): ?>
 
 <?php global $subjects; ?>
 <?php if(count($subjects)): ?>
@@ -107,7 +108,12 @@ elseif($uses>=30) $popularityCategory=4;
     </li>
 <?php endforeach; ?>
 </ul>
-<?php endif; ?>
+<?php endif; // end checking if we are in Drupal or not ?>
+
+
+
+
+<?php endif; // end checking for subjects array.... ?>
 
 
 

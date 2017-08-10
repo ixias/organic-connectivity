@@ -1,5 +1,0 @@
-name = Organic Context
-description = Context framework
-package = Organic Connectivity
-core = 7.x
-files[] = organic_context.module;

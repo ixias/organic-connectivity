@@ -1,4 +1,5 @@
 <?php global $request_tree; ?>
+<?php include_once('items.php'); ?>
 <?php global $item_viewers; ?>
     <div class="options-display">
         <label for="display-choice"><h3>Displays</h3></label>

@@ -103,7 +103,7 @@ foreach($nd->connections as $item_context){
 
 
 
-<?php if($request_tree[0]=='node'&&isset($nd)): ?>
+<?php if(isset($nd)): ?>
 <a href="/<?php echo(drupal_get_path_alias('node/'.$nd->nid)); ?>" title="<?php echo($nd->title); ?>">
 <?php else: ?>
 <a href="<?php echo($_SERVER['REQUEST_URI']); ?>">
@@ -126,11 +126,8 @@ if(isset($nd->nid)&&isset($subjects[$nd->nid])&&!empty($nd->field_images)){
 ?>
 
 
-<?php if($show_nid): ?>
-<span class="numerological"><?php
-if(isset($request_tree[1])&&is_numeric($request_tree[1])) echo($request_tree[1]);
-elseif($request_tree[2]&&is_numeric($request_tree[2])) echo($request_tree[2]);
-?></span>
+<?php if($show_nid&&isset($nd)): ?>
+<span class="numerological"><?php if(is_numeric($nd->nid)) echo($nd->nid); ?></span>
 <?php endif; ?>
 
 <span class="title"><?php
@@ -138,9 +135,9 @@ if(isset($nd)) echo($nd->title);
 elseif($title=drupal_get_title()) echo($title);
 ?>
 
-<?php if(!empty($nd->field_subtitle)){
-?><span class="subtitle"><?php echo($nd->field_subtitle[LANGUAGE_NONE][0]['value']);?></span><?php
-}?>
+<?php if(!empty($nd->field_subtitle)): ?>
+<span class="subtitle"><?php echo($nd->field_subtitle[LANGUAGE_NONE][0]['value']);?></span>
+<?php endif; ?>
 
 </span>
 

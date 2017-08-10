@@ -1,5 +1,0 @@
-name = Organic Gallery
-description = Portfolio presentation framework
-package = Organic Connectivity
-core = 7.x
-files[] = organic_gallery.module;

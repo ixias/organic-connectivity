@@ -1,5 +1,0 @@
-name = Organic Prototype
-description = Defining the howness of nodal connections
-package = Organic Connectivity
-core = 7.x
-files[] = organic_prototype.module;
