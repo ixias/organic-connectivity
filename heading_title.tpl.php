@@ -128,8 +128,8 @@ if(isset($nd->nid)&&isset($subjects[$nd->nid])&&!empty($nd->field_images)){
 
 <?php if($show_nid): ?>
 <span class="numerological"><?php
-if(arg(1)&&is_numeric(arg(1))) echo(arg(1));
-elseif(arg(2)&&is_numeric(arg(2))) echo(arg(2));
+if(isset($request_tree[1])&&is_numeric($request_tree[1])) echo($request_tree[1]);
+elseif($request_tree[2]&&is_numeric($request_tree[2])) echo($request_tree[2]);
 ?></span>
 <?php endif; ?>
 
