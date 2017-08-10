@@ -381,7 +381,7 @@ function organic_connectivity_theme(){
     return array(
         'heading_title'=>array(
             'template'=>'heading_title',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'node'=>NULL,
                 'show_nid'=>FALSE,
@@ -392,15 +392,15 @@ function organic_connectivity_theme(){
         ),
         'parent_context_navigation'=>array(
             'template'=>'parent_context_navigation',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'context_children_image_style'=>'medium',
                 'showChildren'=>10,
             ),
         ),
         'context_layer'=>array(
-            'template'=>'contexts',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'template'=>'viewer_tree_layer',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'context'=>NULL,
                 'image_style'=>NULL,
@@ -414,26 +414,26 @@ function organic_connectivity_theme(){
         ),
         'overview'=>array(
             'template'=>'overview',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(),
         ),
         'attributes_of_node'=>array(
             'template'=>'attributes_of_node',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'node'=>NULL,
             ),
         ),
         'attribute_of_nodes'=>array(
             'template'=>'attribute_of_nodes',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'attribute'=>NULL,
             ),
         ),
         'cloud'=>array(
             'template'=>'viewer_cloud',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables'=>array(
                 'context'=>NULL,
                 'image_style'=>'thumbnail',
@@ -448,19 +448,19 @@ function organic_connectivity_theme(){
         ),
         'tree'=>array(
             'template'=>'viewer_tree',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
         ),
         'serpent'=>array(
             'template'=>'viewer_serpent',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
         ),
         'neuron'=>array(
             'template'=>'viewer_neuron',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
         ),
         'sunburst'=>array(
             'template'=>'viewer_sunburst',
-            'path'=>drupal_get_path('module','organic_prototype').'/lib',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
         ),
     );
 }
@@ -675,6 +675,9 @@ if(!empty($context_collection_set[$contextcontext['value']]->field_weight)){
 
 
 function organic_connectivity_intro(){
+    /// Incase library sym linking needs to happen
+    /*symlink('/homepages/21/d93015512/htdocs/library/organic_connectivity/',
+    '/homepages/21/d93015512/htdocs/library/drupal/sites/all/modules/organic_connectivity/lib');*/
     /// Incase subdomain sym linking needs to happen
     /*symlink($_SERVER['DOCUMENT_ROOT'].'/sites/visionarysportsgroup.com',
             $_SERVER['DOCUMENT_ROOT'].'/sites/visionarysports.anoml.net');*/
