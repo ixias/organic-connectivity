@@ -104,6 +104,26 @@ array_shift($GLOBALS['request_tree']);
     if( in_array("authenticated user", $user->roles) ) return TRUE;
     return FALSE;
 }*/
+function organic_connectivity_super_user_access(){
+    global $user;
+    if($user->uid=='1') return TRUE;
+    return FALSE;
+}
+function organic_connectivity_edit_access(){
+    global $user;
+    if($user->uid!='0') return TRUE;
+    return FALSE;
+}
+function organic_connectivity_check_item_access(){
+    if($restricted_to=variable_get('organic_context_items_restrict_to_users','')){
+        $restricted_to=explode(',',$restricted_to);
+        global $user;
+        if(isset($user->name)&&in_array($user->name,$restricted_to)) return TRUE;
+        if(isset($user->name)&&in_array('[creator]',$restricted_to)) return TRUE;
+        return FALSE;
+    }
+    return TRUE;
+}
 function organic_connectivity_check_category_access(){
     if($restricted_to=variable_get('organic_context_categories_restrict_to_users','')){
         $restricted_to=explode(',',$restricted_to);
@@ -116,6 +136,12 @@ function organic_connectivity_check_category_access(){
 }
 
 
+function organic_connectivity_output_plain($data_from_theme_template){
+    //header('Content-Type:text/xml');
+    drupal_add_http_header('Content-Type','text/xml');
+    drupal_add_http_header('Charset','utf-8');
+    echo($data_from_theme_template);
+}
 
 
 function organic_connectivity_menu(){
@@ -132,7 +158,7 @@ function organic_connectivity_menu(){
             'description'=>'Configurable variables for OrganicConnectivity',
             'page callback'=>'drupal_get_form',
             'page arguments'=>array('organic_connectivity_config_page',),
-            'access callback'=>'organic_prototype_super_user_access',
+            'access callback'=>'organic_connectivity_super_user_access',
             'menu_name'=>'main-menu',
         ),
         'connectivity/overview'=>array(
@@ -284,7 +310,7 @@ function organic_connectivity_menu(){
                     'show_sorting'=>FALSE,
                 )
             ),
-            'access callback'=>'organic_prototype_super_user_access',
+            'access callback'=>'organic_connectivity_super_user_access',
             'menu_name'=>'main-menu',
         ),
         'connectivity/attributes' => array(
@@ -365,11 +391,11 @@ function organic_connectivity_menu(){
         ),
 /*        'node/add/thing' => array(
             'page callback' => 'organic_connectivity_build_form',
-            'access callback' => 'organic_prototype_super_user_access',
+            'access callback' => 'organic_connectivity_super_user_access',
         ),*/
 /*        'node/%/edit' => array(
             'page callback' => 'organic_connectivity_build_form',
-            'access callback' => 'organic_prototype_super_user_access',
+            'access callback' => 'organic_connectivity_super_user_access',
         ),*/
     );
 }

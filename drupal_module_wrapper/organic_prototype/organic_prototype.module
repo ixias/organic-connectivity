@@ -13,7 +13,7 @@ function organic_prototype_menu(){
                     'show_contexts'=>1,
                 )
             ),
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'access callback'=>TRUE,
             'menu_name'=>'main-menu',
         ),
@@ -28,7 +28,7 @@ function organic_prototype_menu(){
                     'show_contexts'=>1,
                 )
             ),
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
         ),
         'items/rotator'=>array(
@@ -49,7 +49,7 @@ function organic_prototype_menu(){
                     'cinema_size_thumb'=>'thumbnail',
                 )
             ),
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
         ),
         'items/global'=>array(
@@ -69,7 +69,7 @@ function organic_prototype_menu(){
                     'image_size_sub'=>'thumbnail',
                 )
             ),
-            'access callback' => 'organic_prototype_check_item_access',
+            'access callback' => 'organic_connectivity_check_item_access',
             'menu_name' => 'main-menu',
         ),
         'items/table'=>array(
@@ -95,7 +95,7 @@ function organic_prototype_menu(){
                     'viewer'=>'nodes',
                     'perpage'=>20,
             )),
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
         ),
         'items/sort-by'=>array(
@@ -119,7 +119,7 @@ function organic_prototype_menu(){
                     'show_toolbar'=>TRUE,
                 )
             ),
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
         ),
         'items/sort-by/random'=>array(
@@ -137,7 +137,7 @@ function organic_prototype_menu(){
                     'show_toolbar'=>FALSE,
                 )
             ),
-            'access callback' => 'organic_prototype_check_item_access',
+            'access callback' => 'organic_connectivity_check_item_access',
             'menu_name' => 'main-menu',
         ),
         'items/sort-by/unpublished'=>array(
@@ -151,7 +151,7 @@ function organic_prototype_menu(){
                     'show_pagination'=>TRUE,
                 )
             ),
-            'access callback'=>'organic_prototype_super_user_access',
+            'access callback'=>'organic_connectivity_super_user_access',
             'menu_name'=>'main-menu',
         ),
         'syndicate'=>array(
@@ -159,29 +159,15 @@ function organic_prototype_menu(){
             'description'=>'An RSS feed of recent content items',
             'page callback'=>'theme',
             'page arguments'=>array('syndication'),
-            'delivery callback'=>'organic_prototype_output_plain',
-            'access callback'=>'organic_prototype_check_item_access',
+            'delivery callback'=>'organic_connectivity_output_plain',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
         ),
     );
 }
 
-function organic_prototype_output_plain($data_from_theme_template){
-    //header("Content-Type:text/xml");
-    drupal_add_http_header("Content-Type","text/xml");
-    drupal_add_http_header("Charset","utf-8");
-    echo($data_from_theme_template);
-}
-function organic_prototype_check_item_access(){
-    if($restricted_to=variable_get('organic_context_items_restrict_to_users','')){
-        $restricted_to=explode(',',$restricted_to);
-        global $user;
-        if(isset($user->name)&&in_array($user->name,$restricted_to)) return TRUE;
-        if(isset($user->name)&&in_array('[creator]',$restricted_to)) return TRUE;
-        return FALSE;
-    }
-    return TRUE;
-}
+
+
 
 function organic_prototype_theme(){
     return array(
@@ -256,11 +242,8 @@ function organic_prototype_theme(){
     );
 }
 
-function organic_prototype_super_user_access(){
-    global $user;
-    if($user->uid=='1') return TRUE;
-    return FALSE;
-}
+
+
 
 function organic_prototype_preprocess(&$variables,$hook){
 

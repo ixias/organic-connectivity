@@ -6,7 +6,7 @@ function organic_planner_menu(){
             'title'=>'Dashboard',
             'description'=>'At a Glance',
             'page callback'=>'organic_planner_dashboard',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'1',
         ),
@@ -14,7 +14,7 @@ function organic_planner_menu(){
             'title'=>'Checklist',
             'description'=>'List of Action Items',
             'page callback'=>'organic_planner_checklist',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'2',
         ),
@@ -22,13 +22,13 @@ function organic_planner_menu(){
             'title'=>'Task Editor',
             'description'=>'Simple Task Editor',
             'page callback'=>'organic_planner_task_editor',
-            'access callback'=>'organic_planner_edit_access',
+            'access callback'=>'organic_connectivity_edit_access',
         ),
         'notebook'=>array(
             'title'=>'Notebook',
             'description'=>'List of Notes',
             'page callback'=>'organic_planner_notes',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'3',
         ),
@@ -36,7 +36,7 @@ function organic_planner_menu(){
             'title'=>'Focii',
             'description'=>'...',
             'page callback'=>'organic_planner_activities_days',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'5',
         ),
@@ -44,7 +44,7 @@ function organic_planner_menu(){
             'title'=>'Edit',
             'description'=>'Edit focii',
             'page callback'=>'organic_planner_display_db_edit',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'6',
         ),
@@ -77,7 +77,7 @@ function organic_planner_menu(){
             'page callback'=>'theme',
             'page arguments' => array('icalendar'),
             'delivery callback'=>'organic_planner_deliver_text',
-            'access callback'=>'organic_prototype_check_item_access',
+            'access callback'=>'organic_connectivity_check_item_access',
             'menu_name'=>'main-menu',
             'weight'=>'7',
         ),
@@ -136,11 +136,6 @@ function organic_planner_form_organic_prototype_config_page_alter(&$form,&$form_
 }
 
 
-function organic_planner_edit_access(){
-    global $user;
-    if($user->uid!='0') return TRUE;
-    return FALSE;
-}
 
 
 
