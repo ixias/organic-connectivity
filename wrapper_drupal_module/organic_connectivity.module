@@ -614,7 +614,7 @@ function organic_connectivity_theme(){
             ),
         ),
         'pagination'=>array(
-            'template'=>'pagination',
+            'template'=>'items_pagination',
             'path'=>drupal_get_path('module','organic_connectivity').'/lib',
             'variables' => array(
                 'item_count'=>NULL,
@@ -650,7 +650,15 @@ function organic_connectivity_preprocess(&$variables,$hook){
     }
 
     if($hook=='overview'){
+        echo('hello overview');
     }
+    if($hook=='node'){
+        echo('hello node');
+    }
+
+
+
+    /// BEGIN ATTRIBUTE HOOKS
 
     if($hook=='viewer_toolbar_attribute_chooser'||
        $hook=='attributes_of_node'||
@@ -686,8 +694,7 @@ function organic_connectivity_preprocess(&$variables,$hook){
        $hook=='heading_title'||
        $hook=='prototypes'||
        $hook=='json_contexts'||
-       $hook=='attributes_of_node'||
-       $hook=='node'){
+       $hook=='attributes_of_node'){
 
         //Defining the howness of nodal connections
 
