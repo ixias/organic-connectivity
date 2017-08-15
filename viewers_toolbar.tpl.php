@@ -1,7 +1,7 @@
 
 <section id="viewers-toolbar" class="toolbar">
 
-    <!--div><h3>Items</h3><?php #echo($item_count); ?></div-->
+    <div><h3>Items</h3>$item_count<?php #echo($item_count); ?></div>
 
     <div>
 <?php include('items_sorting_options.tpl.php'); ?>
@@ -17,8 +17,9 @@
     </div>
 
     <div>
-<?php include_once('viewers.php'); ?>
 <?php global $request_tree; ?>
+<?php include_once('viewers.php'); ?>
+<?php //global $viewers; ?>
     <div class="options-display">
         <label for="display-choice"><h3>Displays</h3></label>
         <select id="display-choice">

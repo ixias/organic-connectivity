@@ -11,9 +11,11 @@
     <label for="connectivity-type-choice"><h3>Attribute Type</h3></label>
     <select id="connectivity-type-choice">
 
+<?php if(!empty($attribs)): ?>
 <?php foreach($attribs as $atr): ?>
 <option><?php echo($atr->title); ?></option>
 <?php endforeach; ?>
+<?php endif; ?>
 
         <!--option selected="selected">Subjects</option>
         <option>Types</option>

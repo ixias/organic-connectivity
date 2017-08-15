@@ -230,8 +230,8 @@ function organic_context_json_contexts_sunburst_d3_child_adder(&$subjects,$subje
                 $arr['children'][]=array(
                     'name'=>$subjects[$child]->title,
                     //'name'=>$subjects[$child]['title'],
-                    'size'=>rand(0,4000),
-                    //'size'=>$subjects[$child]['uses'],
+                    'size'=>(count($subjects[$child]->uses)/10),
+                    //'size'=>rand(0,4000),
                     );
             }
             else{

@@ -59,6 +59,12 @@ function organic_connectivity_output_plain($data_from_theme_template){
     drupal_add_http_header('Charset','utf-8');
     echo($data_from_theme_template);
 }
+function organic_connectivity_csv_output($data_from_theme_template){
+    //// A wrapper function to use Drupal to output plain CSV feeds
+    drupal_add_http_header('Content-Type','text/csv');
+    drupal_add_http_header('Charset','utf-8');
+    echo($data_from_theme_template);
+}
 
 function organic_connectivity_menu(){
     return array(
@@ -222,6 +228,13 @@ function organic_connectivity_menu(){
             'description'=>'JSON feed for Connected Sunburst Context Graph',
             'page callback'=>'organic_connectivity_json_sunburst_d3',
             'delivery callback'=>'drupal_json_output',
+            'access callback'=>'organic_connectivity_check_category_access',
+        ),
+        'connectivity/feeds/counts'=>array(
+            'title'=>'Counts CSV',
+            'description'=>'CSV useage feed for partition graph',
+            'page callback'=>'organic_connectivity_counts_csv',
+            'delivery callback'=>'organic_connectivity_csv_output',
             'access callback'=>'organic_connectivity_check_category_access',
         ),
         'connectivity/attributes' => array(
@@ -558,6 +571,10 @@ function organic_connectivity_theme(){
                 'break_by_user'=>FALSE,
             ),
         ),
+        'partition'=>array(
+            'template'=>'viewer_partition',
+            'path'=>drupal_get_path('module','organic_connectivity').'/lib',
+        ),
         'tree'=>array(
             'template'=>'viewer_tree',
             'path'=>drupal_get_path('module','organic_connectivity').'/lib',
@@ -673,12 +690,14 @@ function organic_connectivity_preprocess(&$variables,$hook){
                 'prototypical',
                 TRUE
             );
-            foreach($attribs as $aid=>$attribute){
-                $attribs[$aid]->connections=
-                    organic_connectivity_extract_connections($attribute->field_context);
-                $attribs[$aid]->uses=organic_prototype_obtain_entities_by_connection($attribute->nid,'prototypical',FALSE);
-                //$attributes_total_uses+=count($attribs[$aid]->uses);
-
+            if(!empty($attribs)){
+                foreach($attribs as $aid=>$attribute){
+                    $attribs[$aid]->connections=
+                        organic_connectivity_extract_connections($attribute->field_context);
+                    $attribs[$aid]->uses=organic_prototype_obtain_entities_by_connection($attribute->nid,'prototypical',FALSE);
+                    //$attributes_total_uses+=count($attribs[$aid]->uses);
+    
+                }
             }
         }
     }
@@ -794,10 +813,8 @@ function organic_connectivity_preprocess(&$variables,$hook){
                     }
                 }
 
-
             /// -
             foreach($subjects as $cid=>$context){
-
                 // Count uses
                 $subjects[$cid]->uses=organic_prototype_obtain_entities_by_connection($context->nid,'contextual',FALSE);
                 $subjects_total_uses+=count($subjects[$cid]->uses);
@@ -836,13 +853,15 @@ function organic_connectivity_preprocess(&$variables,$hook){
 
     }
     if($hook=='parent_context_navigation'&&arg(0)=='node'){
-        foreach($nd->connections as $attribute){
-            if($attribute['type']==variable_get('organic_connectivity_context_prototype','')){
-                if($subjects[$attribute['nid']]->nid!=variable_get('organic_connectivity_context_prototype','')){
-                    $nd->contexts_without_context_prototype[]=$attribute;
+        if(isset($nd->connections)){
+            foreach($nd->connections as $attribute){
+                if($attribute['type']==variable_get('organic_connectivity_context_prototype','')){
+                    if($subjects[$attribute['nid']]->nid!=variable_get('organic_connectivity_context_prototype','')){
+                        $nd->contexts_without_context_prototype[]=$attribute;
+                    }
                 }
             }
-        }
+        }else echo('NO CONNECTIONS??');
     }
     //// END SUBJECT HOOKS
 
@@ -2041,7 +2060,7 @@ function organic_prototype_numeric_list(){
 
 
 
-///////////////////    The templates for the JSON feeds for infovis are below here: ////
+///////////////////    The templates for the JSON/CSV feeds for infovis are below here: ////
 
 
 
@@ -2152,11 +2171,42 @@ function organic_connectivity_json_sunburst_d3(){
     $arr=organic_context_json_contexts_sunburst_d3_child_adder(
             $subjects,
             1
-//            variable_get('organic_connectivity_context_prototype','')
+            //variable_get('organic_connectivity_context_prototype','')
     );
     return $arr;
 }
 
+
+function organic_connectivity_counts_csv(){
+    global $subjects;
+    if(empty($subjects)){
+        $variables=array();
+        organic_connectivity_preprocess($variables,'json_contexts');
+    }
+    $arr=organic_context_json_contexts_sunburst_d3_child_adder(
+            $subjects,
+            1
+            //variable_get('organic_connectivity_context_prototype','')
+    );
+    $o="id,value\r\n";
+    $o.=str_replace(array('.'),'',$arr['name']).",\r\n";
+    $o.=humbug($arr['children'],str_replace(array('.'),'',$arr['name']));
+    return $o;
+}
+function humbug($a,$prefix){
+    $o='';
+    foreach($a as $child){
+        $o.=$prefix.'.'.str_replace(array('.'),'',$child['name']).',';
+        if(array_key_exists('children',$child)){
+            $o.="\r\n";
+            $o.=humbug($child['children'],$prefix.'.'.str_replace(array('.'),'',$child['name']));
+        }
+        else{
+            $o.=($child['size']+10)."\r\n";
+        }
+    }
+    return $o;
+}
 
 
 
@@ -2337,6 +2387,10 @@ function organic_connectivity_json_Sunburst_flat(){
     return $JSON_SUNBURST;
 
 }
+
+
+
+
 
 
 

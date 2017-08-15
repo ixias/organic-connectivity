@@ -259,7 +259,7 @@ window.onload=loadScript;
     $return.="<div style=\"float:right;width:50%;\">\n";
     $return.="<h3>Webcam</h3>\n";
     $return.="<div class=\"now_attribute\">\n";
-    $return.="    <div><img src=\"http://ixias.orgnsm.org/camoff.jpg\" alt=\"Webcam\" id=\"webcamImage\"/></div>\n";
+    $return.="    <div><img src=\"http://ixia.orgnsm.org/camoff.jpg\" alt=\"Webcam\" id=\"webcamImage\"/></div>\n";
     $return.="</div>\n";
     $return.="</div>\n\n";
 
@@ -557,7 +557,7 @@ function organic_planner_show_associated_project($node){
     if(!empty($node->field_context)){
 
         if(empty($node->connections)){
-            $node->connections=organic_prototype_extract_connections($node->field_context,NULL);
+            $node->connections=organic_connectivity_extract_connections($node->field_context,NULL);
         }
 
         $return="";
@@ -568,13 +568,13 @@ function organic_planner_show_associated_project($node){
             if(!empty($item_context['content']->field_context)){
 
                 if(empty($item_context['content']->connections)){
-                    $item_context['content']->connections=organic_prototype_extract_connections($item_context['content']->field_context,NULL);
+                    $item_context['content']->connections=organic_connectivity_extract_connections($item_context['content']->field_context,NULL);
                 }
 
-                //Check if project
+                //Check if subject
                 $SHOW_NODE=FALSE;
                 foreach($item_context['content']->connections as $subC){
-                    if($subC['nid']==variable_get('organic_connectivity_project_prototype','')){
+                    if($subC['nid']==variable_get('organic_connectivity_context_prototype','')){
                         $SHOW_NODE=TRUE;
                     }
                 }
